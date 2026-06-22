@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简笔画转换器</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            min-width: 120px;
+            height: 40px;
+            line-height: 20px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .preview-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .preview {
+            flex: 0 0 48%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .preview h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        img, canvas {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            display: block;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        #status {
+            color: #666;
+            text-align: center;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        .file-label:hover {
+            background-color: #0b7dda;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #4CAF50;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .action-buttons {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .reset-button {
+            background-color: #f44336;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            min-width: 120px;
+            height: 40px;
+            line-height: 20px;
+        }
+        .reset-button:hover {
+            background-color: #d32f2f;
+        }
+        .reset-button:disabled {
+            background-color: #ffcdd2;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简笔画转换器</h1>
+        <div class="upload-container">
+            <label for="imageUpload" class="file-label">选择图片</label>
+            <input type="file" id="imageUpload" class="file-input" accept="image/*">
+            <br>
+            <div class="action-buttons">
+                <button id="convertBtn" class="button" disabled>转换为简笔画</button>
+                <button id="resetBtn" class="reset-button" disabled>清除重来</button>
+            </div>
+        </div>
+        
+        <div id="status">等待上传图片...</div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="preview-container">
+            <div class="preview">
+                <h3>原图</h3>
+                <img id="originalImage" alt="原图预览">
+            </div>
+            
+            <div class="preview">
+                <h3>简笔画效果</h3>
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const imageUpload = document.getElementById('imageUpload');
+        const convertBtn = document.getElementById('convertBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const originalImage = document.getElementById('originalImage');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const statusText = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        
+        // 初始化上传提示
+        function initUploadPlaceholder() {
+            // 设置原图区域的提示文本
+            const ctx = outputCanvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('请先上传图片', outputCanvas.width / 2, outputCanvas.height / 2);
+            
+            // 添加原图区域的提示
+            originalImage.style.display = 'none';
+            const uploadPlaceholder = document.createElement('div');
+            uploadPlaceholder.id = 'uploadPlaceholder';
+            uploadPlaceholder.innerText = '请上传图片';
+            uploadPlaceholder.style.cssText = 'border: 1px dashed #ccc; padding: 30px; text-align: center; color: #666; border-radius: 4px; background: #f9f9f9; margin-top: 10px;';
+            originalImage.parentNode.insertBefore(uploadPlaceholder, originalImage);
+        }
+        
+        // Canny边缘检测算法实现
+        function cannyEdgeDetection(input, width, height, lowThreshold = 30, highThreshold = 80) {
+            // 步骤1: 高斯模糊
+            const blurred = gaussianBlur(input, width, height);
+            
+            // 步骤2: 计算梯度和方向
+            const [gradients, directions] = computeGradients(blurred, width, height);
+            
+            // 步骤3: 非极大值抑制
+            const nms = nonMaximumSuppression(gradients, directions, width, height);
+            
+            // 步骤4: 双阈值处理和边缘跟踪
+            const edges = hysteresisThresholding(nms, width, height, lowThreshold, highThreshold);
+            
+            // 返回边缘图像数据
+            return edges;
+        }
+        
+        // 高斯模糊处理
+        function gaussianBlur(input, width, height, sigma = 1.4) {
+            // 创建高斯核
+            const kernelSize = 5;
+            const halfSize = Math.floor(kernelSize / 2);
+            const kernel = new Array(kernelSize * kernelSize);
+            
+            // 计算高斯核权重
+            let sum = 0;
+            for (let y = -halfSize; y <= halfSize; y++) {
+                for (let x = -halfSize; x <= halfSize; x++) {
+                    const value = Math.exp(-(x * x + y * y) / (2 * sigma * sigma));
+                    const index = (y + halfSize) * kernelSize + (x + halfSize);
+                    kernel[index] = value;
+                    sum += value;
+                }
+            }
+            
+            // 归一化核权重
+            for (let i = 0; i < kernel.length; i++) {
+                kernel[i] /= sum;
+            }
+            
+            // 应用高斯模糊
+            const output = new Uint8ClampedArray(width * height);
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let sum = 0;
+                    
+                    // 应用卷积
+                    for (let ky = -halfSize; ky <= halfSize; ky++) {
+                        for (let kx = -halfSize; kx <= halfSize; kx++) {
+                            const pixelX = Math.min(Math.max(x + kx, 0), width - 1);
+                            const pixelY = Math.min(Math.max(y + ky, 0), height - 1);
+                            
+                            const pixelIndex = pixelY * width + pixelX;
+                            const kernelIndex = (ky + halfSize) * kernelSize + (kx + halfSize);
+                            
+                            sum += input[pixelIndex] * kernel[kernelIndex];
+                        }
+                    }
+                    
+                    output[y * width + x] = Math.round(sum);
+                }
+            }
+            
+            return output;
+        }
+        
+        // 计算梯度和方向
+        function computeGradients(input, width, height) {
+            const gradients = new Uint8ClampedArray(width * height);
+            const directions = new Uint8ClampedArray(width * height);
+            
+            // Sobel算子
+            const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const sobelY = [1, 2, 1, 0, 0, 0, -1, -2, -1];
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let sumX = 0;
+                    let sumY = 0;
+                    
+                    // 应用Sobel算子
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const pixelValue = input[(y + ky) * width + (x + kx)];
+                            const kernelIndex = (ky + 1) * 3 + (kx + 1);
+                            
+                            sumX += pixelValue * sobelX[kernelIndex];
+                            sumY += pixelValue * sobelY[kernelIndex];
+                        }
+                    }
+                    
+                    // 计算梯度幅值
+                    const g = Math.sqrt(sumX * sumX + sumY * sumY);
+                    gradients[y * width + x] = Math.min(255, g);
+                    
+                    // 计算梯度方向 (0, 45, 90, 135度)
+                    let angle = Math.atan2(sumY, sumX) * 180 / Math.PI;
+                    if (angle < 0) angle += 180;
+                    
+                    if ((angle >= 0 && angle < 22.5) || (angle >= 157.5 && angle <= 180)) {
+                        directions[y * width + x] = 0; // 0度
+                    } else if (angle >= 22.5 && angle < 67.5) {
+                        directions[y * width + x] = 45; // 45度
+                    } else if (angle >= 67.5 && angle < 112.5) {
+                        directions[y * width + x] = 90; // 90度
+                    } else {
+                        directions[y * width + x] = 135; // 135度
+                    }
+                }
+            }
+            
+            return [gradients, directions];
+        }
+        
+        // 非极大值抑制
+        function nonMaximumSuppression(gradients, directions, width, height) {
+            const result = new Uint8ClampedArray(width * height);
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const index = y * width + x;
+                    const direction = directions[index];
+                    const gradient = gradients[index];
+                    
+                    let neighbor1 = 0;
+                    let neighbor2 = 0;
+                    
+                    // 根据梯度方向获取邻近像素
+                    switch (direction) {
+                        case 0: // 水平方向
+                            neighbor1 = gradients[index - 1];
+                            neighbor2 = gradients[index + 1];
+                            break;
+                        case 45: // 45度
+                            neighbor1 = gradients[(y - 1) * width + (x + 1)];
+                            neighbor2 = gradients[(y + 1) * width + (x - 1)];
+                            break;
+                        case 90: // 垂直方向
+                            neighbor1 = gradients[(y - 1) * width + x];
+                            neighbor2 = gradients[(y + 1) * width + x];
+                            break;
+                        case 135: // 135度
+                            neighbor1 = gradients[(y - 1) * width + (x - 1)];
+                            neighbor2 = gradients[(y + 1) * width + (x + 1)];
+                            break;
+                    }
+                    
+                    // 如果当前梯度最大，则保留
+                    if (gradient >= neighbor1 && gradient >= neighbor2) {
+                        result[index] = gradient;
+                    } else {
+                        result[index] = 0;
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        // 双阈值处理和边缘跟踪
+        function hysteresisThresholding(input, width, height, lowThreshold, highThreshold) {
+            const result = new Uint8ClampedArray(width * height);
+            const visited = new Array(width * height).fill(false);
+            
+            // 初始化结果图像
+            for (let i = 0; i < input.length; i++) {
+                if (input[i] >= highThreshold) {
+                    result[i] = 255; // 强边缘
+                } else if (input[i] >= lowThreshold) {
+                    result[i] = 128; // 弱边缘
+                } else {
+                    result[i] = 0; // 非边缘
+                }
+            }
+            
+            // 边缘跟踪 (DFS)
+            function dfs(x, y) {
+                const stack = [{x, y}];
+                const directions = [
+                    {dx: -1, dy: -1}, {dx: 0, dy: -1}, {dx: 1, dy: -1},
+                    {dx: -1, dy: 0},                   {dx: 1, dy: 0},
+                    {dx: -1, dy: 1},  {dx: 0, dy: 1},  {dx: 1, dy: 1}
+                ];
+                
+                while (stack.length > 0) {
+                    const current = stack.pop();
+                    const currentIndex = current.y * width + current.x;
+                    
+                    if (visited[currentIndex]) continue;
+                    visited[currentIndex] = true;
+                    
+                    if (result[currentIndex] === 128) {
+                        result[currentIndex] = 255; // 将弱边缘连接到强边缘
+                        
+                        // 检查相邻像素
+                        for (const dir of directions) {
+                            const nx = current.x + dir.dx;
+                            const ny = current.y + dir.dy;
+                            
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const neighborIndex = ny * width + nx;
+                                
+                                if (!visited[neighborIndex] && result[neighborIndex] === 128) {
+                                    stack.push({x: nx, y: ny});
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 从强边缘开始跟踪
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = y * width + x;
+                    
+                    if (result[index] === 255 && !visited[index]) {
+                        dfs(x, y);
+                    }
+                }
+            }
+            
+            // 清除未连接的弱边缘
+            for (let i = 0; i < result.length; i++) {
+                if (result[i] === 128) {
+                    result[i] = 0;
+                }
+            }
+            
+            return result;
+        }
+        
+        // 提取和简化轮廓线条
+        function extractContours(edges, width, height) {
+            const visited = new Array(width * height).fill(false);
+            const contours = [];
+            
+            function traceContour(startX, startY) {
+                const contour = [];
+                const stack = [{x: startX, y: startY}];
+                const directions = [
+                    {dx: -1, dy: -1}, {dx: 0, dy: -1}, {dx: 1, dy: -1},
+                    {dx: -1, dy: 0},                   {dx: 1, dy: 0},
+                    {dx: -1, dy: 1},  {dx: 0, dy: 1},  {dx: 1, dy: 1}
+                ];
+                
+                let pointCount = 0;
+                const maxPoints = 300; // 防止过长的线条
+                
+                while (stack.length > 0 && pointCount < maxPoints) {
+                    const current = stack.pop();
+                    const index = current.y * width + current.x;
+                    
+                    if (visited[index] || edges[index] === 0) continue;
+                    
+                    visited[index] = true;
+                    contour.push(current);
+                    pointCount++;
+                    
+                    // 查找下一个相邻的边缘点
+                    let found = false;
+                    for (const dir of directions) {
+                        const nx = current.x + dir.dx;
+                        const ny = current.y + dir.dy;
+                        
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                            const neighborIndex = ny * width + nx;
+                            
+                            if (!visited[neighborIndex] && edges[neighborIndex] === 255) {
+                                stack.push({x: nx, y: ny});
+                                found = true;
+                                break; // 只添加一个相邻点到栈中
+                            }
+                        }
+                    }
+                    
+                    // 如果没有找到下一个点，结束当前轮廓
+                    if (!found && contour.length > 0) {
+                        break;
+                    }
+                }
+                
+                return contour;
+            }
+            
+            // 寻找所有轮廓
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = y * width + x;
+                    
+                    if (edges[index] === 255 && !visited[index]) {
+                        const contour = traceContour(x, y);
+                        
+                        // 只保留足够长的轮廓
+                        if (contour.length > 8 && contour.length < 300) {
+                            contours.push(contour);
+                        }
+                    }
+                }
+            }
+            
+            return contours;
+        }
+        
+        // 绘制简笔画函数
+        async function drawLineArt(imgElement) {
+            const ctx = outputCanvas.getContext('2d');
+            
+            // 调整画布大小
+            const maxDimension = 800; // 限制处理图像的最大尺寸以提高性能
+            let width = imgElement.width;
+            let height = imgElement.height;
+            
+            // 保持原始图像的宽高比
+            const aspectRatio = width / height;
+            
+            // 如果图像太大，按比例缩小
+            if (width > maxDimension || height > maxDimension) {
+                const ratio = Math.min(maxDimension / width, maxDimension / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
+            
+            // 确保画布与原图有相同的宽高比
+            outputCanvas.width = width;
+            outputCanvas.height = height;
+            
+            // 创建临时画布用于处理
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 绘制原图（可能需要调整大小）
+            tempCtx.drawImage(imgElement, 0, 0, width, height);
+            
+            // 获取图像数据
+            const imageData = tempCtx.getImageData(0, 0, width, height);
+            const pixels = imageData.data;
+            
+            // 将彩色图像转为灰度
+            const grayPixels = new Uint8ClampedArray(width * height);
+            for (let i = 0, j = 0; i < pixels.length; i += 4, j++) {
+                grayPixels[j] = Math.round(pixels[i] * 0.299 + pixels[i+1] * 0.587 + pixels[i+2] * 0.114);
+            }
+            
+            try {
+                // 应用Canny边缘检测
+                const edges = cannyEdgeDetection(grayPixels, width, height, 30, 80);
+                
+                // 提取轮廓
+                const contours = extractContours(edges, width, height);
+                
+                // 清除画布并设置白色背景
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 设置线条样式
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // 绘制轮廓线条
+                for (const contour of contours) {
+                    if (contour.length < 2) continue;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(contour[0].x, contour[0].y);
+                    
+                    // 使用贝塞尔曲线平滑线条
+                    if (contour.length >= 3) {
+                        for (let i = 0; i < contour.length - 2; i++) {
+                            const xc = (contour[i].x + contour[i+1].x) / 2;
+                            const yc = (contour[i].y + contour[i+1].y) / 2;
+                            ctx.quadraticCurveTo(contour[i].x, contour[i].y, xc, yc);
+                        }
+                        
+                        // 处理最后一点
+                        const last = contour.length - 1;
+                        ctx.quadraticCurveTo(
+                            contour[last-1].x, contour[last-1].y,
+                            contour[last].x, contour[last].y
+                        );
+                    } else {
+                        // 如果点太少，就直接连接
+                        for (let i = 1; i < contour.length; i++) {
+                            ctx.lineTo(contour[i].x, contour[i].y);
+                        }
+                    }
+                    
+                    ctx.stroke();
+                }
+                
+                statusText.textContent = "转换完成！(使用备用方法)";
+                convertBtn.disabled = false;
+            } catch (error) {
+                console.error("处理出错:", error);
+                statusText.textContent = "处理失败: " + error.message;
+                convertBtn.disabled = false;
+            }
+        }
+        
+        // 处理图片上传
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalImage.src = e.target.result;
+                    originalImage.style.display = 'block';
+                    const placeholder = document.getElementById('uploadPlaceholder');
+                    if (placeholder) {
+                        placeholder.remove();
+                    }
+                    originalImage.onload = () => {
+                        convertBtn.disabled = false;
+                        resetBtn.disabled = false;
+                        statusText.textContent = "图片已加载，点击转换按钮开始处理";
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 清除重来功能
+        function resetAll() {
+            // 重置图片上传
+            imageUpload.value = '';
+            
+            // 重置原图
+            originalImage.src = '';
+            originalImage.style.display = 'none';
+            
+            // 重置提示区域
+            initUploadPlaceholder();
+            
+            // 重置画布
+            const ctx = outputCanvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('请先上传图片', outputCanvas.width / 2, outputCanvas.height / 2);
+            
+            // 重置按钮状态
+            convertBtn.disabled = true;
+            resetBtn.disabled = true;
+            
+            // 重置状态文本
+            statusText.textContent = "等待上传图片...";
+            
+            // 隐藏进度条
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+        }
+        
+        // 添加重置按钮点击事件
+        resetBtn.addEventListener('click', resetAll);
+        
+        // 转换按钮点击事件
+        convertBtn.addEventListener('click', async () => {
+            if (!originalImage.src || originalImage.src === '') {
+                statusText.textContent = "请先上传图片";
+                return;
+            }
+            
+            convertBtn.disabled = true;
+            statusText.textContent = "正在处理...";
+            
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress > 90) {
+                    clearInterval(progressInterval);
+                }
+                progressBar.style.width = progress + '%';
+            }, 100);
+            
+            try {
+                // 执行简笔画转换
+                await drawLineArt(originalImage);
+                
+                // 完成进度条
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
+                
+                // 确保重置按钮可用
+                resetBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('处理图像时出错:', error);
+                statusText.textContent = "处理失败: " + error.message;
+                convertBtn.disabled = false;
+                
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+            }
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            statusText.textContent = "请上传图片";
+            
+            // 设置画布初始大小，保持合适的宽高比
+            const containerWidth = document.querySelector('.preview').clientWidth - 20; // 减去一些边距
+            outputCanvas.width = containerWidth;
+            outputCanvas.height = Math.floor(containerWidth * 0.75); // 常见的4:3宽高比
+            
+            // 初始化上传提示
+            initUploadPlaceholder();
+            
+            // 添加窗口大小变化事件
+            window.addEventListener('resize', () => {
+                if (!originalImage.src || originalImage.src === '') {
+                    // 如果没有图片，重新调整画布大小
+                    const containerWidth = document.querySelector('.preview').clientWidth - 20;
+                    outputCanvas.width = containerWidth;
+                    outputCanvas.height = Math.floor(containerWidth * 0.75);
+                    
+                    // 重新绘制提示文本
+                    const ctx = outputCanvas.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = '#666';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('请先上传图片', outputCanvas.width / 2, outputCanvas.height / 2);
+                } else if (originalImage.complete) {
+                    // 如果图片已加载并且用户已经转换过，重新执行转换
+                    if (statusText.textContent.includes("转换完成")) {
+                        drawLineArt(originalImage);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

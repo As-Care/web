@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>即将跳转</title>
+</head>
+
+<body>
+  <script>
+    const toUrlMap = {
+      '546': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2683&sa_utm=3qnr42932')}`,    //1. 定制页面：pages/ scan/ result? scene = 2683 & sa_utm=3qnr42932
+      '542': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2680&sa_utm=3j5s39302')}`,    //2. 红色页面：pages/ scan/ result? scene = 2680 & sa_utm=3j5s39302
+      '543': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2681&sa_utm=pqom10540')}`,    //3. 玛莎LP：pages/ scan/ result? scene = 2681 & sa_utm=pqom10540
+      '544': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2679&sa_utm=ijf416796')}`,    //4. 金色玛莎：pages/ scan/ result? scene = 2679 & sa_utm=ijf416796
+      '545': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2682&sa_utm=iil26268')}`,    //5. 蓝色玛莎：pages/ scan/ result? scene = 2682 & sa_utm=iil26268
+      '547': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2685&sa_utm=3cyb6098')}`,    //6.须刀集合：pages/ scan/ result? scene = 2685 & sa_utm=3cyb6098
+      '548': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2686&sa_utm=drxy57421')}`,    //7.商城首页：pages/ scan/ result? scene = 2686 & sa_utm=drxy57421
+      '549': `sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=${encodeURIComponent('pages/scan/result?scene=2687&sa_utm=6dmi50849')}`,    //8.备用打底落地页（年货节换新)：pages/scan/result?scene=2687&sa_utm=6dmi50849
+    }
+
+
+    // 获取URL中的id参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    
+    // 根据id获取对应的跳转链接
+    const url = id && toUrlMap[id]
+      ? toUrlMap[id]
+      : "sinaweibo://wbdiversion?username=gh_adf4fedc61e3&path=pages%2Fhome%2Findex";
+    console.log(url, id, 'urlurl');
+    window.location.href = url;
+  </script>
+</body>
+
+</html>

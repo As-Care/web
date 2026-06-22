@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五子棋</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+      padding: 20px;
+    }
+
+    .game-info {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #2c3e50;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .board {
+      position: relative;
+      width: 700px;
+      height: 700px;
+      background-color: #DEB887;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      border: 8px solid #8B4513;
+    }
+
+    /* 棋盘线容器 */
+    .board-lines {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      right: 40px;
+      bottom: 40px;
+      z-index: 1;
+      border: 1px solid #000;
+    }
+
+    /* 横线 */
+    .horizontal-lines {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .horizontal-lines::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(0deg, #000, #000 1px, transparent 1px, transparent 40px);
+    }
+
+    /* 竖线 */
+    .vertical-lines {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .vertical-lines::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: repeating-linear-gradient(90deg, #000, #000 1px, transparent 1px, transparent 40px);
+    }
+
+    .intersection {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .piece {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .black {
+      background: radial-gradient(circle at 30% 30%, #666, #000);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .white {
+      background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-info">
+      当前玩家: <span id="currentPlayer">黑子</span>
+    </div>
+    <div class="board" id="board">
+      <div class="board-lines">
+        <div class="horizontal-lines"></div>
+        <div class="vertical-lines"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const currentPlayerDisplay = document.getElementById('currentPlayer');
+    let currentPlayer = 'black'; // 'black' 或 'white'
+    const boardSize = 15;
+    const gameState = Array(boardSize).fill().map(() => Array(boardSize).fill(null));
+
+    // 创建棋盘交叉点
+    function createBoard() {
+      for (let i = 0; i < boardSize; i++) {
+        for (let j = 0; j < boardSize; j++) {
+          const intersection = document.createElement('div');
+          intersection.className = 'intersection';
+          intersection.style.left = `${40 * j + 40}px`;
+          intersection.style.top = `${40 * i + 40}px`;
+          intersection.dataset.row = i;
+          intersection.dataset.col = j;
+          intersection.addEventListener('click', handleMove);
+          board.appendChild(intersection);
+        }
+      }
+    }
+
+    // 处理落子
+    function handleMove(e) {
+      const row = parseInt(e.target.dataset.row);
+      const col = parseInt(e.target.dataset.col);
+
+      // 检查该位置是否已经有棋子
+      if (gameState[row][col]) return;
+
+      // 放置棋子
+      const piece = document.createElement('div');
+      piece.className = `piece ${currentPlayer}`;
+      e.target.appendChild(piece);
+
+      // 更新游戏状态
+      gameState[row][col] = currentPlayer;
+
+      // 检查是否获胜
+      if (checkWin(row, col)) {
+        setTimeout(() => {
+          alert(`${currentPlayer === 'black' ? '黑子' : '白子'}获胜！`);
+          resetGame();
+        }, 100);
+        return;
+      }
+
+      // 切换玩家
+      currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+      currentPlayerDisplay.textContent = currentPlayer === 'black' ? '黑子' : '白子';
+    }
+
+    // 检查是否获胜
+    function checkWin(row, col) {
+      const directions = [
+        [[0, 1], [0, -1]], // 水平
+        [[1, 0], [-1, 0]], // 垂直
+        [[1, 1], [-1, -1]], // 对角线
+        [[1, -1], [-1, 1]] // 反对角线
+      ];
+
+      return directions.some(direction => {
+        const count = 1 + // 当前位置
+          countPieces(row, col, direction[0][0], direction[0][1]) + // 正向
+          countPieces(row, col, direction[1][0], direction[1][1]); // 反向
+        return count >= 5;
+      });
+    }
+
+    // 计算某个方向上相同颜色的棋子数量
+    function countPieces(row, col, deltaRow, deltaCol) {
+      let count = 0;
+      let currentRow = row + deltaRow;
+      let currentCol = col + deltaCol;
+
+      while (
+        currentRow >= 0 && currentRow < boardSize &&
+        currentCol >= 0 && currentCol < boardSize &&
+        gameState[currentRow][currentCol] === currentPlayer
+      ) {
+        count++;
+        currentRow += deltaRow;
+        currentCol += deltaCol;
+      }
+
+      return count;
+    }
+
+    // 重置游戏
+    function resetGame() {
+      board.innerHTML = '';
+      gameState.forEach(row => row.fill(null));
+      currentPlayer = 'black';
+      currentPlayerDisplay.textContent = '黑子';
+      createBoard();
+    }
+
+    // 初始化游戏
+    createBoard();
+  </script>
+</body>
+</html>
