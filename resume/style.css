@@ -4308,9 +4308,7 @@ html {
   left: 50%;
   margin-left: -500px;
   top: 50%;
-  margin-top: -230px;
-  overflow: hidden;
-  height: 480px
+  margin-top: -280px;
 }
 
 .W-introduce-me {
@@ -4344,7 +4342,7 @@ html {
 
 .W-introduce p {
   max-width: 850px;
-  margin: 20px auto 0;
+  margin: 60px auto 0;
   font-size: 1.25rem;
   line-height: 30px;
   text-align: justify;
@@ -6726,27 +6724,39 @@ body .W-lian-bottom .w-gongzhonghao {
   }
 
   .nav-yuan {
-    right: 3%;
-    top: 0;
-    z-index: 6666;
-    width: 60px;
-    margin: 0;
-    padding: 0
+    right: 15px !important;
+    top: 8px !important;
+    z-index: 99999 !important;
+    width: 48px !important;
+    height: 48px !important;
+    background: rgba(30, 27, 38, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .Ws-header {
     display: none;
     width: 100%;
-    height: 60px;
-    background: #444;
+    height: 64px !important;
+    line-height: 64px !important;
+    background: rgba(26, 25, 33, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 200;
-    color: #4094c7;
-    font-size: 20px;
-    line-height: 60px;
-    text-align: center
+    z-index: 20000 !important;
+    color: #ffffff !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
   .W-head-portrait {
@@ -6754,35 +6764,42 @@ body .W-lian-bottom .w-gongzhonghao {
   }
 
   .W-yi-bg {
-    display: block;
-    width: 100%;
-    text-align: center;
-    padding-bottom: 5%;
-    overflow: hidden;
-    background: url("?Anti-stealing-link=img&path=WS1.jpg") no-repeat;
-    background-position: center center;
-    background-size: cover
+    box-sizing: border-box !important;
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    padding: 55px 16px 45px !important;
+    overflow: hidden !important;
+    background: linear-gradient(rgba(26, 25, 33, 0.45), rgba(26, 25, 33, 0.98)), url("https://carelife.top/web-static/asjl/ban1.jpg") no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
   }
 
   .Ws-tou {
-    width: 25%;
-    margin: 15% auto 0;
-    display: block;
-    border-radius: 50%;
-    border: 2px solid #a6a9aa
+    width: 80px !important;
+    height: 80px !important;
+    margin: 40px auto 0 !important;
+    border-radius: 50% !important;
+    border: 3px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+    overflow: hidden !important;
+    display: block !important;
   }
 
   .Ws-tou img {
-    width: 100%;
-    border-radius: 50%
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
   }
 
   .W-yi-bg strong {
-    display: inline-block;
-    margin-top: -5px;
-    font-size: 20px;
-    font-weight: 500;
-    color: #333;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-style: italic !important;
+    font-weight: normal !important;
+    margin-top: 12px !important;
+    margin-bottom: 24px !important;
+    display: block !important;
     moz-user-select: -moz-none;
     -moz-user-select: none;
     -o-user-select: none;
@@ -6795,8 +6812,10 @@ body .W-lian-bottom .w-gongzhonghao {
   .W-yi-bg h2 {
     font-family: myFirstFont, "微软雅黑", SimSun, "宋体", sans-serif;
     white-space: nowrap;
-    font-size: 25px;
-    color: #333;
+    font-size: 24px !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    margin-top: 24px !important;
     moz-user-select: -moz-none;
     -moz-user-select: none;
     -o-user-select: none;
@@ -6813,8 +6832,8 @@ body .W-lian-bottom .w-gongzhonghao {
   .W-yi-bg .W-p1,
   .W-yi-bg .W-p2 {
     white-space: nowrap;
-    font-size: 16px;
-    color: #333;
+    font-size: 14.5px !important;
+    color: #ffffff !important;
     moz-user-select: -moz-none;
     -moz-user-select: none;
     -o-user-select: none;
@@ -6822,6 +6841,10 @@ body .W-lian-bottom .w-gongzhonghao {
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none
+  }
+
+  .W-yi-bg .W-p1 {
+    margin-bottom: 8px !important;
   }
 
   .W-yi-bg .W-mailbox {
@@ -6841,12 +6864,12 @@ body .W-lian-bottom .w-gongzhonghao {
   }
 
   .Ws-me-title {
-    margin-top: 13%
+    margin-top: 10px;
   }
 
   .Ws-me-title h3 {
     text-align: center;
-    margin: 5% auto 0;
+    margin:10px auto 0;
     font-size: 2rem;
     font-weight: 500;
     white-space: nowrap
@@ -7135,8 +7158,229 @@ body .W-lian-bottom .w-gongzhonghao {
   .Ws-ji .Ws-me-title i,
   .Ws-jing .Ws-me-title i,
   .Ws-me-title i {
-    width: 0;
-    display: block !important
+    width: 50px !important;
+    height: 4px !important;
+    background: #ffd200 !important; /* Vibrant yellow accent line */
+    display: block !important;
+    margin: 8px auto 25px !important;
+    border-radius: 2px !important;
+  }
+
+  /* Premium Mobile Theme & Typography Overrides */
+  .W-page2 {
+    background-color: #1a1921 !important; /* Deep luxury dark background */
+    color: #e2e8f0 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow-x: hidden !important;
+  }
+
+  .Ws-me-title h3 {
+    color: #ffffff !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .Ws-me p, .Ws-ji p {
+    color: #cbd5e1 !important;
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+    text-align: justify !important;
+  }
+
+  .Ws-me strong, .Ws-ji strong {
+    color: #ffd200 !important; /* Highlight key bullet headers */
+    font-weight: 600 !important;
+  }
+
+  /* Skill mastery list layout styling */
+  .Ws-ji p br {
+    display: block;
+    content: "";
+    margin-top: 8px;
+  }
+
+  /* Premium Mobile Navigation Button styling overrides */
+  .nav-yuan .nav-toggle {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .nav-yuan .nav-toggle .icon {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -2px !important;
+    margin-left: -15px !important;
+    background-color: #ffffff !important;
+  }
+
+  .nav-open .nav-yuan .nav-toggle .icon {
+    background-color: transparent !important;
+  }
+
+  .nav-yuan .nav-toggle .icon:before,
+  .nav-yuan .nav-toggle .icon:after {
+    background-color: #ffffff !important;
+  }
+
+  /* Skills mastery bars styling */
+  .Ws-tu {
+    margin-top: 25px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .mobile-skill-item {
+    width: 100%;
+  }
+
+  .skill-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .skill-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .skill-value {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #ffd200;
+  }
+
+  .skill-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .skill-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  /* Experience section styling */
+  .Ws-gs {
+    border-left: 2px dashed rgba(255, 255, 255, 0.15) !important;
+    margin-left: 10px !important;
+    padding-left: 20px !important;
+    padding-bottom: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .Ws-gs strong {
+    color: #ffffff !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    margin-top: 0 !important;
+    line-height: 1.4 !important;
+  }
+
+  .Ws-gs em {
+    color: #ffd200 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    margin-bottom: 8px !important;
+    display: inline-block !important;
+  }
+
+  .Ws-gs p {
+    color: #94a3b8 !important;
+    font-size: 13.5px !important;
+    line-height: 1.7 !important;
+  }
+
+  .Ws-time span {
+    background: rgba(237, 85, 101, 0.12) !important;
+    color: #ff5e7e !important;
+    border: 1px solid rgba(237, 85, 101, 0.25);
+    padding: 3px 12px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+
+  /* Project cards styling overrides */
+  .mobile-project-card {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 18px !important;
+    margin-bottom: 20px !important;
+    box-sizing: border-box !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .mobile-project-card.border-blue { border-left: 4px solid #3498db !important; }
+  .mobile-project-card.border-teal { border-left: 4px solid #1abc9c !important; }
+  .mobile-project-card.border-purple { border-left: 4px solid #9b59b6 !important; }
+  .mobile-project-card.border-orange { border-left: 4px solid #e67e22 !important; }
+  .mobile-project-card.border-green { border-left: 4px solid #2ecc71 !important; }
+
+  .mobile-project-header h4 {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+  }
+
+  .mobile-project-tech span {
+    font-size: 10px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+  }
+
+  .mobile-project-desc {
+    font-size: 13.5px !important;
+    color: #cbd5e1 !important;
+    line-height: 1.65 !important;
+  }
+
+  .mobile-project-metrics {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .mobile-project-metrics span {
+    color: #ffd200 !important;
+    font-size: 11px !important;
+  }
+
+  /* Contact Me & QR Code centering */
+  .wx_img {
+    text-align: center !important;
+    margin: 25px auto 10px !important;
+  }
+
+  .wx_img img {
+    width: 100% !important;
+    max-width: 340px !important;
+    height: auto !important;
+    border-radius: 12px !important;
+    border: 4px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    box-sizing: border-box !important;
   }
 }
 
@@ -7147,18 +7391,9 @@ body .W-lian-bottom .w-gongzhonghao {
 }
 
 @media screen and (max-width: 600px) {
-  .navigation {
-    width: 70%;
-    right: -73%
-  }
 }
 
 @media screen and (max-width: 480px) {
-  .navigation {
-    width: 80%;
-    right: -120%;
-    border-left: transparent 140px solid
-  }
 
   .W-logo {
     width: 250px;
