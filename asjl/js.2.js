@@ -452,19 +452,22 @@ $(function() {
 				observer: true
 			});
 		}
-		var mySwiper3 = new Swiper('.swiper-container3', {
-			speed: 700,
-			spaceBetween: 20,
-      effect: 'cube',
-      loop:true,
-			pagination: '.swiper-pagination3',
-			preventClicks: false,
-			paginationClickable: true,
-			observeParents: true,
-			preventClicks: false,
-			preventLinksPropagation: true,
-			observer: true
-		});
+		var mySwiper3;
+		if ($('.swiper-container3').length > 0) {
+			mySwiper3 = new Swiper('.swiper-container3', {
+				speed: 700,
+				spaceBetween: 20,
+				effect: 'cube',
+				loop:true,
+				pagination: '.swiper-pagination3',
+				preventClicks: false,
+				paginationClickable: true,
+				observeParents: true,
+				preventClicks: false,
+				preventLinksPropagation: true,
+				observer: true
+			});
+		}
 		
 
 		function quxiao() {
