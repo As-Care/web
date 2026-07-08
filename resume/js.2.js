@@ -13433,6 +13433,18 @@ $(function () {
           mySwiper2.slideTo(index);
         }
       });
+      // Stop propagation of wheel events inside scrollable containers to prevent vertical swiper scrolling
+      document.querySelectorAll('.project-card-body, .experience-card .card-body').forEach(function(el) {
+        el.addEventListener('wheel', function(e) {
+          e.stopPropagation();
+        }, { passive: true });
+        el.addEventListener('mousewheel', function(e) {
+          e.stopPropagation();
+        }, { passive: true });
+        el.addEventListener('DOMMouseScroll', function(e) {
+          e.stopPropagation();
+        }, { passive: true });
+      });
     }
     var mySwiper3;
     if ($(".swiper-container3").length > 0) {

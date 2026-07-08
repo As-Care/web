@@ -1700,6 +1700,41 @@ button.swiper-pagination-bullet {
   right: 0
 }
 
+#loader-wrapper .loader-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.3s 0.3s ease-out;
+}
+
+#loader-wrapper .loader-section.section-left::after {
+  right: 0;
+  box-shadow: 
+    0 0 25px rgba(255, 255, 255, 1),
+    10px 0 40px rgba(255, 255, 255, 0.95),
+    25px 0 70px rgba(255, 255, 255, 0.65),
+    50px 0 120px rgba(255, 255, 255, 0.35);
+}
+
+#loader-wrapper .loader-section.section-right::after {
+  left: 0;
+  box-shadow: 
+    0 0 25px rgba(255, 255, 255, 1),
+    -10px 0 40px rgba(255, 255, 255, 0.95),
+    -25px 0 70px rgba(255, 255, 255, 0.65),
+    -50px 0 120px rgba(255, 255, 255, 0.35);
+}
+
+.loaded #loader-wrapper .loader-section::after {
+  opacity: 1;
+}
+
 .loaded #loader-wrapper .loader-section.section-left {
   -webkit-transform: translateX(-100%);
   -ms-transform: translateX(-100%);
@@ -7860,10 +7895,10 @@ body .W-lian-bottom .w-gongzhonghao {
 /* Glassmorphic Project Cards styling */
 .swiper-container2 {
   width: 1060px !important;
-  height: 480px !important;
+  height: 620px !important;
   margin: 0 auto;
   top: 50% !important;
-  margin-top: -210px !important;
+  margin-top: -290px !important;
 }
 
 .project-slide-wrapper {
@@ -7878,7 +7913,7 @@ body .W-lian-bottom .w-gongzhonghao {
 
 .project-card {
   width: 48%;
-  height: 390px;
+  height: 550px;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -7894,6 +7929,21 @@ body .W-lian-bottom .w-gongzhonghao {
               border-color 0.4s ease;
   position: relative;
   overflow: hidden;
+}
+
+/* Custom Scrollbar for Project Card Body */
+.project-card-body::-webkit-scrollbar {
+  width: 5px;
+}
+.project-card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.project-card-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+.project-card-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 230, 118, 0.4);
 }
 
 /* Light sweep effect on hover */
@@ -8039,10 +8089,10 @@ body .W-lian-bottom .w-gongzhonghao {
 }
 
 .project-card-body {
-  font-size: 13px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
-  margin: 0 0 16px 0;
+  margin: 0 0 10px 0;
   text-align: left;
   flex-grow: 1;
 }
@@ -8051,10 +8101,10 @@ body .W-lian-bottom .w-gongzhonghao {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   background: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
-  padding: 12px;
+  padding: 6px 12px;
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
@@ -8231,7 +8281,7 @@ body .W-lian-bottom .w-gongzhonghao {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: calc(100% / 4);
+  width: calc(100% / 5);
   border-radius: 1rem;
   z-index: 1;
   transition:
@@ -8258,9 +8308,18 @@ body .W-lian-bottom .w-gongzhonghao {
     0 0 10px rgba(255, 235, 150, 0.4) inset;
 }
 
+/* Emerald */
+#glass-emerald:checked ~ .glass-glider {
+  transform: translateX(200%);
+  background: linear-gradient(135deg, #2ecc7155, #2ecc71);
+  box-shadow:
+    0 0 18px rgba(46, 204, 113, 0.5),
+    0 0 10px rgba(100, 240, 150, 0.4) inset;
+}
+
 /* Platinum */
 #glass-platinum:checked ~ .glass-glider {
-  transform: translateX(200%);
+  transform: translateX(300%);
   background: linear-gradient(135deg, #d0e7ff55, #a0d8ff);
   box-shadow:
     0 0 18px rgba(160, 216, 255, 0.5),
@@ -8269,7 +8328,7 @@ body .W-lian-bottom .w-gongzhonghao {
 
 /* Diamond */
 #glass-diamond:checked ~ .glass-glider {
-  transform: translateX(300%);
+  transform: translateX(400%);
   background: linear-gradient(135deg, #00d2d355, #48dbfb);
   box-shadow:
     0 0 18px rgba(72, 219, 251, 0.5),
@@ -8341,7 +8400,7 @@ body .W-lian-bottom .w-gongzhonghao {
 }
 
 .mobile-project-desc {
-  font-size: 12px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.5;
   margin: 0 0 10px 0;
