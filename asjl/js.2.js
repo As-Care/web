@@ -436,19 +436,22 @@ $(function() {
 		function moveNav(index) {
 			mySwiper1.slideTo(index)
 		}
-		var mySwiper2 = new Swiper('.swiper-container2', {
-			speed: 700,
-			paginationClickable: true,
-			effect: 'fade',
-			pagination: '.swiper-pagination2',
-			paginationBulletRender: function(swiper, index, className) {
-				return '<span class="' + className + '">' + (index + 1) + '</span>'
-			},
-			observeParents: true,
-			preventClicks: false,
-			preventLinksPropagation: true,
-			observer: true
-		});
+		var mySwiper2;
+		if ($('.swiper-container2').length > 0) {
+			mySwiper2 = new Swiper('.swiper-container2', {
+				speed: 700,
+				paginationClickable: true,
+				effect: 'fade',
+				pagination: '.swiper-pagination2',
+				paginationBulletRender: function(swiper, index, className) {
+					return '<span class="' + className + '">' + (index + 1) + '</span>'
+				},
+				observeParents: true,
+				preventClicks: false,
+				preventLinksPropagation: true,
+				observer: true
+			});
+		}
 		var mySwiper3 = new Swiper('.swiper-container3', {
 			speed: 700,
 			spaceBetween: 20,
@@ -482,7 +485,7 @@ $(function() {
 		if(!!window.ActiveXObject || "ActiveXObject" in window) {
 			$('.W-introduce-me').find('img').hide();
 			$('.W-introduce-me').css({
-				'background': 'url("./img/user3.jpg") no-repeat',
+				'background': 'url("https://carelife.top/web-static/asjl/wx-profile-picture.jpg") no-repeat',
 				'background-size': 'cover'
 			})
 		}
@@ -510,14 +513,10 @@ $(function() {
 				$('.W-pinglun').stop(true, true).hide()
 			}, 600)
 		});
-		var Imgatr = ['./img/sj_head_bg.jpg', './img/sj_head_bg2.jpg', './img/sj_head_bg3.jpg'];
+		var Imgatr = ['https://carelife.top/web-static/asjl/sj_head_bg.jpg', 'https://carelife.top/web-static/asjl/sj_head_bg2.jpg', 'https://carelife.top/web-static/asjl/sj_head_bg3.jpg'];
 		var url = Imgatr[Math.floor(Math.random() * Imgatr.length)];
 		$('.W-yi-bg').css('background-image', 'url(' + url + ')');
-		if(url == "./img/user3.jpg") {
-			$('.Ws-tou').find('img').attr('src', './img/user3.jpg')
-		} else {
-			$('.Ws-tou').find('img').attr('src', './img/user3.jpg')
-		}
+		$('.Ws-tou').find('img').attr('src', 'https://carelife.top/web-static/asjl/wx-profile-picture.jpg');
 		var Wjn = [{
 			"color": "#1abc9c",
 			"text": "vue"
@@ -638,6 +637,29 @@ $(function() {
 					"width": 60
 				}, 1000)
 			}
-		})
+		});
+
+		// Elegant Toast popup for disabled links
+		$(document).on('click', '.project-link-disabled', function(e) {
+			e.preventDefault();
+			var reason = $(this).attr('data-reason') || '项目正在维护中...';
+			showElegantToast(reason);
+			return false;
+		});
+
+		function showElegantToast(message) {
+			$('.elegant-toast').remove();
+			var toast = $('<div class="elegant-toast">' + message + '</div>');
+			$('body').append(toast);
+			setTimeout(function() {
+				toast.addClass('show');
+			}, 10);
+			setTimeout(function() {
+				toast.removeClass('show');
+				setTimeout(function() {
+					toast.remove();
+				}, 400);
+			}, 2500);
+		}
 	})()
 });
