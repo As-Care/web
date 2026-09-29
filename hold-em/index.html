@@ -1,0 +1,2544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>德州扑克手牌分析器</title>
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico">
+  <script src="./vue.global.prod.js"></script>
+  <style>
+    :root {
+      --bg-main: #0b0e14;
+      --bg-card: #141820;
+      --bg-panel: #1d222d;
+      --border-color: #2b3240;
+      --text-main: #f0f4f8;
+      --text-muted: #8b9bb4;
+      --accent-blue: #388bfd;
+      --accent-green: #2ea043;
+      --accent-red: #f85149;
+      --accent-gold: #f1e05a;
+      --accent-purple: #bc8cff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 20px 40px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1380px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .title-group h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn:hover {
+      background: #2b3342;
+      border-color: #65748d;
+    }
+
+    .btn-danger {
+      background: #221c20;
+      border-color: #4a2829;
+      color: #ff7b72;
+    }
+
+    .btn-danger:hover {
+      background: #da3633;
+      color: #fff;
+    }
+
+    /* Left-Right Split Layout */
+    /* Left-Right Split Layout: 50% - 50% 一半一半 */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .split-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    /* Poker Table Felt Area */
+    .poker-table {
+      background: radial-gradient(ellipse at 50% 30%, #153b30 0%, #0a1f18 100%);
+      border: 4px solid #231713;
+      box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.5);
+      border-radius: 18px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-card {
+      background: rgba(11, 14, 20, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-card.hero-active {
+      border-color: rgba(56, 139, 253, 0.6);
+      box-shadow: 0 0 18px rgba(56, 139, 253, 0.15);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-hero {
+      background: #1f6feb;
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    /* Hero Layout Row */
+    .hero-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hero-hand-info-box {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-hand-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-hand-val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #58a6ff;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hero-hand-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .hero-hand-val.empty-hint {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* Community Board Container with Street Groups */
+    .board-container {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .street-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .street-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .street-cards {
+      display: flex;
+      gap: 10px;
+    }
+
+    .street-divider {
+      width: 1px;
+      height: 96px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 4px 12px;
+      align-self: flex-end;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-clear-section {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 4px;
+      background: rgba(248, 81, 73, 0.14);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: #ff7b72;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-clear-section:hover {
+      background: #da3633;
+      color: #ffffff;
+      border-color: #f85149;
+    }
+
+    /* Card Slot Wrapper & Individual Card Delete Button */
+    .card-slot-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-card-del {
+      height: 20px;
+      padding: 0 6px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      background: rgba(248, 81, 73, 0.14);
+      border: 1px solid rgba(248, 81, 73, 0.35);
+      color: #ff7b72;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-card-del.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .btn-card-del:hover {
+      background: #da3633;
+      color: #ffffff;
+      border-color: #f85149;
+      transform: scale(1.05);
+    }
+
+    /* Prominent Large Poker Card Slots */
+    .card-slots {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .card-slot {
+      width: 82px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      user-select: none;
+    }
+
+    .card-slot:hover {
+      border-color: #58a6ff;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    .card-slot.filled {
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    .card-slot.filled:hover {
+      transform: translateY(0);
+    }
+
+    /* Intense Active Glowing Pulse (for Empty Active Cards) */
+    @keyframes slot-active-pulse {
+      0% {
+        border-color: #58a6ff;
+        box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.6), 0 0 16px rgba(88, 166, 255, 0.85);
+      }
+      50% {
+        border-color: #a5d6ff;
+        box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.85), 0 0 26px rgba(88, 166, 255, 1);
+      }
+      100% {
+        border-color: #58a6ff;
+        box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.6), 0 0 16px rgba(88, 166, 255, 0.85);
+      }
+    }
+
+    /* 1. 空卡槽处于选中激活状态：向上提一点(-4px) + 呼吸脉冲光效动画 */
+    .card-slot.active:not(.filled) {
+      border: 3px solid #58a6ff !important;
+      animation: slot-active-pulse 1.6s infinite ease-in-out !important;
+      transform: translateY(-4px) !important;
+      z-index: 10;
+    }
+
+    /* 2. 已选完牌的卡槽处于选中激活状态：落下去平放(不向上提) + 保留高亮蓝色发光光效 + 去除脉冲动画 */
+    .card-slot.filled.active {
+      border: 3px solid #58a6ff !important;
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.6), 0 0 16px rgba(88, 166, 255, 0.85), 0 5px 16px rgba(0, 0, 0, 0.45) !important;
+      transform: translateY(0) !important;
+      animation: none !important;
+      z-index: 10;
+    }
+
+    /* Inside Card Typography & Icons */
+    .card-corner-top {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .card-val {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .card-suit-corner {
+      font-size: 14px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .card-suit-big {
+      font-size: 46px;
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -46%);
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .slot-empty-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+    }
+
+    .slot-label {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .slot-plus-icon {
+      font-size: 20px;
+      line-height: 1;
+      opacity: 0.6;
+    }
+
+    /* Standard 2-Color Deck: Spades & Clubs are Black, Hearts & Diamonds are Red */
+    .suit-s { color: #111827; } /* Spades: Deep Black */
+    .suit-c { color: #111827; } /* Clubs: Deep Black */
+    .suit-h { color: #dc2626; } /* Hearts: Vivid Red */
+    .suit-d { color: #dc2626; } /* Diamonds: Vivid Red */
+
+    /* Card Selector Matrix - Dark Container matching overall dark theme */
+    .selector-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .selector-panel .section-title {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .selector-panel .btn {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .selector-panel .btn:hover {
+      background: #2b3342;
+      color: #fff;
+    }
+
+    .suit-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .suit-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .suit-label {
+      width: 34px;
+      height: 40px;
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-size: 20px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    .rank-btn {
+      flex: 1;
+      height: 40px;
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .rank-btn:hover:not(:disabled) {
+      background: #2563eb;
+      color: #ffffff !important;
+      border-color: #1d4ed8;
+      transform: translateY(-2px) scale(1.06);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+    }
+
+    .rank-btn:disabled {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.2) !important;
+      cursor: not-allowed;
+      text-decoration: line-through;
+      box-shadow: none;
+    }
+
+    /* Right Column: Beating Combinations Panel (50% width) */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    /* Summary Banner in 50% width */
+    .analysis-summary-box {
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .analysis-summary-box.nuts {
+      background: linear-gradient(135deg, rgba(210, 153, 34, 0.28) 0%, rgba(210, 153, 34, 0.08) 100%);
+      border: 1px solid #d29922;
+    }
+
+    .analysis-summary-box.beaten {
+      background: linear-gradient(135deg, rgba(218, 54, 51, 0.28) 0%, rgba(218, 54, 51, 0.08) 100%);
+      border: 1px solid #f85149;
+    }
+
+    .analysis-summary-box.wait {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+    }
+
+    .summary-left {
+      flex: 1;
+    }
+
+    .summary-left h2 {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.3;
+    }
+
+    .summary-left p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .summary-right-metrics {
+      display: flex;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 10px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-width: 65px;
+    }
+
+    .metric-item .metric-val {
+      font-size: 22px;
+      font-weight: 900;
+      font-family: monospace;
+      line-height: 1;
+    }
+
+    .metric-item .metric-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Action Recommendation Bar */
+    .action-recommendation-bar {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action-rec-lead {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      white-space: nowrap;
+    }
+
+    .action-rec-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      white-space: nowrap;
+    }
+
+    .action-rec-pill.badge-allin {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #000;
+      border: 1px solid #fbbf24;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.55);
+    }
+
+    .action-rec-pill.badge-raise {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+      color: #fff;
+      border: 1px solid #f87171;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
+    }
+
+    .action-rec-pill.badge-call {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      border: 1px solid #60a5fa;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+    }
+
+    .action-rec-pill.badge-check {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #fff;
+      border: 1px solid #34d399;
+      box-shadow: 0 0 12px rgba(5, 150, 105, 0.45);
+    }
+
+    .action-rec-pill.badge-fold {
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+      color: #e5e7eb;
+      border: 1px solid #6b7280;
+    }
+
+    .action-rec-disclaimer {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .action-rec-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      flex: 1 1 auto;
+    }
+
+    /* Combinations Panel */
+    .beating-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Category Filter Tabs */
+    .category-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cat-tab {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      transition: all 0.12s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .cat-tab:hover {
+      background: #2b3342;
+      color: var(--text-main);
+    }
+
+    .cat-tab.active {
+      background: #388bfd;
+      border-color: #58a6ff;
+      color: #fff;
+    }
+
+    .cat-tab.royal {
+      border-color: #a371f7;
+      color: #d2a8ff;
+    }
+
+    .cat-tab.royal.active {
+      background: linear-gradient(135deg, #8957e5 0%, #d2a8ff 100%);
+      color: #000;
+      font-weight: 800;
+    }
+
+    /* Combos Grid (2 columns in 50% split layout) */
+    .combos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px;
+      max-height: 580px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .combos-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .combos-grid::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .combo-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 9px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .combo-card:hover {
+      border-color: #f85149;
+      background: rgba(248, 81, 73, 0.05);
+      transform: translateY(-1px);
+    }
+
+    .combo-card.is-royal {
+      border-color: #a371f7;
+      background: rgba(163, 113, 247, 0.1);
+    }
+
+    .combo-card.is-royal:hover {
+      border-color: #d2a8ff;
+    }
+
+    .combo-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-pair {
+      display: flex;
+      gap: 3px;
+    }
+
+    .mini-card {
+      width: 30px;
+      height: 42px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px 3px;
+      font-weight: 800;
+    }
+
+    .mini-card .mv {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .mini-card .ms {
+      font-size: 13px;
+      line-height: 1;
+      align-self: flex-end;
+    }
+
+    .combo-details {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .combo-hand-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ff7b72;
+    }
+
+    .combo-hand-name.royal-text {
+      color: #d2a8ff;
+      font-weight: 800;
+    }
+
+    .combo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .combo-rank-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .combo-rank-tag.royal-tag {
+      background: rgba(163, 113, 247, 0.25);
+      color: #d2a8ff;
+      border: 1px solid rgba(163, 113, 247, 0.5);
+    }
+
+    .empty-state {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .empty-icon {
+      font-size: 34px;
+    }
+
+    /* PC Desktop: Prevent Full-Page Scrollbar, Adapt Beating Panel Height */
+    @media (min-width: 1025px) {
+      html, body {
+        height: 100vh;
+        overflow-y: hidden;
+      }
+
+      body {
+        padding: 10px 20px 12px;
+        box-sizing: border-box;
+      }
+
+      .container {
+        height: 100%;
+        max-height: 100%;
+        gap: 10px;
+      }
+
+      header {
+        flex-shrink: 0;
+        padding: 8px 18px;
+      }
+
+      .split-layout {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .left-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      .poker-table {
+        padding: 12px 16px;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .section-card {
+        padding: 10px 14px;
+        gap: 8px;
+      }
+
+      .selector-panel {
+        padding: 10px 14px;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .suit-rows {
+        gap: 6px;
+      }
+
+      .suit-label, .rank-btn {
+        height: 35px;
+      }
+
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+        height: 100%;
+      }
+
+      .analysis-summary-box {
+        flex-shrink: 0;
+        padding: 12px 16px;
+        gap: 12px;
+      }
+
+      .action-recommendation-bar {
+        margin-top: 6px;
+        padding: 6px 10px;
+      }
+
+      .beating-panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 12px 16px;
+        gap: 8px;
+      }
+
+      .beating-panel .section-header {
+        flex-shrink: 0;
+      }
+
+      .category-tabs {
+        flex-shrink: 0;
+      }
+
+      .combos-grid {
+        flex: 1;
+        min-height: 0;
+        max-height: none !important;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .empty-state {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+    }
+
+    /* Mobile Responsive Optimizations - Ensure Board Never Wraps & 5-Equal Board & Centered Hero */
+    @media (max-width: 640px) {
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+
+      body {
+        padding: 10px 10px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .container {
+        gap: 12px;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 8px 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .title-group {
+        width: 100%;
+      }
+
+      .title-group h1 {
+        font-size: 16px;
+      }
+
+      .title-group p {
+        font-size: 11px;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .action-group {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .action-group .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 6px 6px;
+        font-size: 11px;
+        text-align: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+
+      .split-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      .left-col, .right-col {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      .poker-table {
+        padding: 8px 6px;
+        gap: 8px;
+        border-width: 2px;
+        border-radius: 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .section-card {
+        padding: 8px 6px;
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .section-header {
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .section-title {
+        font-size: 13px !important;
+      }
+
+      /* Guaranteed 5-Equal Grid Display for Community Board on Mobile */
+      .board-container {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding-bottom: 2px;
+      }
+
+      .street-divider {
+        display: none !important;
+      }
+
+      .street-flop {
+        grid-column: span 3 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        min-width: 0 !important;
+      }
+
+      .street-turn,
+      .street-river {
+        grid-column: span 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        min-width: 0 !important;
+      }
+
+      .street-flop .street-cards {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        width: 100% !important;
+      }
+
+      .street-turn .street-cards,
+      .street-river .street-cards {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 4px !important;
+        width: 100% !important;
+      }
+
+      .street-badge {
+        font-size: 9px !important;
+        letter-spacing: 0 !important;
+        height: 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        white-space: nowrap !important;
+      }
+
+      .card-slot-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 4px !important;
+      }
+
+      /* Board 5-equal card slots */
+      .board-container .card-slot {
+        width: 100% !important;
+        aspect-ratio: 5 / 7.2 !important;
+        height: auto !important;
+        min-width: 0 !important;
+        padding: 4px 3px !important;
+        border-radius: 6px !important;
+      }
+
+      .board-container .card-val {
+        font-size: clamp(12px, 3.6vw, 15px) !important;
+        line-height: 1;
+      }
+
+      .board-container .card-suit-corner {
+        font-size: clamp(8px, 2.5vw, 11px) !important;
+        line-height: 1;
+        margin-top: 1px;
+      }
+
+      .board-container .card-suit-big {
+        font-size: clamp(20px, 6vw, 30px) !important;
+      }
+
+      .board-container .slot-empty-content {
+        gap: 3px !important;
+      }
+
+      .board-container .slot-plus-icon {
+        font-size: 16px !important;
+        line-height: 1;
+      }
+
+      .board-container .slot-label {
+        font-size: 10px !important;
+      }
+
+      .board-container .btn-card-del {
+        width: 100% !important;
+        max-width: 50px !important;
+        height: 18px !important;
+        font-size: 8.5px !important;
+        padding: 0 !important;
+      }
+
+      /* Hero Cards on Mobile - Match Community Board Size & Place Info Box Beside */
+      .hero-container {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+
+      .hero-container .card-slots {
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: auto !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+      }
+
+      .hero-container .card-slot-wrapper {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      /* Hero card size matches community board cards exactly */
+      .hero-container .card-slot {
+        width: clamp(48px, 14vw, 56px) !important;
+        aspect-ratio: 5 / 7.2 !important;
+        height: auto !important;
+        min-width: 0 !important;
+        padding: 4px 3px !important;
+        border-radius: 6px !important;
+      }
+
+      .hero-container .card-val {
+        font-size: clamp(12px, 3.6vw, 15px) !important;
+        line-height: 1 !important;
+      }
+
+      .hero-container .card-suit-corner {
+        font-size: clamp(8px, 2.5vw, 11px) !important;
+        line-height: 1 !important;
+        margin-top: 1px !important;
+      }
+
+      .hero-container .card-suit-big {
+        font-size: clamp(20px, 6vw, 30px) !important;
+      }
+
+      .hero-container .slot-empty-content {
+        gap: 3px !important;
+      }
+
+      .hero-container .slot-plus-icon {
+        font-size: 16px !important;
+        line-height: 1 !important;
+      }
+
+      .hero-container .slot-label {
+        font-size: 10px !important;
+      }
+
+      .hero-container .btn-card-del {
+        width: 100% !important;
+        max-width: 48px !important;
+        height: 18px !important;
+        font-size: 8.5px !important;
+        padding: 0 !important;
+      }
+
+      /* Compact Hand Evaluation Box placed to the right of the 2 hero cards */
+      .hero-hand-info-box {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
+        text-align: left !important;
+        align-items: flex-start !important;
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 2px !important;
+      }
+
+      .hero-hand-label {
+        font-size: 10px !important;
+        margin-bottom: 2px !important;
+      }
+
+      .hero-hand-val {
+        font-size: 13.5px !important;
+        line-height: 1.25 !important;
+        font-weight: 800 !important;
+      }
+
+      .hero-hand-val.empty-hint {
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+      }
+
+      .hero-hand-sub {
+        font-size: 10.5px !important;
+        font-weight: 600 !important;
+        display: block !important;
+        margin-top: 2px !important;
+      }
+
+      .selector-panel {
+        padding: 6px 4px;
+        width: 100%;
+        gap: 6px;
+      }
+
+      .suit-rows {
+        gap: 3px;
+        width: 100%;
+      }
+
+      .suit-row {
+        gap: 1.5px;
+        width: 100%;
+      }
+
+      .suit-label {
+        width: 20px;
+        height: 26px;
+        font-size: 13px;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+
+      .rank-btn {
+        flex: 1 1 0;
+        height: 26px;
+        font-size: 10px;
+        font-weight: 800;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border-radius: 4px;
+      }
+
+      /* Compact Recommendation Area with No Excessive Blank Space */
+      .analysis-summary-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .action-recommendation-bar {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        padding: 8px 10px;
+        margin-top: 6px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .action-rec-desc {
+        font-size: 11.5px;
+        line-height: 1.35;
+        flex: none;
+        width: 100%;
+        margin-top: 2px;
+      }
+
+      .summary-right-metrics {
+        width: 100%;
+        justify-content: space-around;
+        padding: 6px 10px;
+      }
+
+      .combos-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <!-- Header -->
+    <header>
+      <div class="title-group">
+        <h1>♠ 德州扑克压制手牌分析器</h1>
+        <p>左侧选择手牌与公共牌，右侧即时全量穷举展示所有大于你的手牌组合与牌型</p>
+      </div>
+      <div class="action-group">
+        <button class="btn" @click="dealSampleRoyal">👑 皇家同花顺示范</button>
+        <button class="btn" @click="dealSampleTwoPair">🎲 两对示范</button>
+        <button class="btn btn-danger" @click="resetAll">✕ 全部清空</button>
+      </div>
+    </header>
+
+    <!-- Main Left-Right Split Layout -->
+    <div class="split-layout">
+      <!-- Left Column: Table & Card Selector -->
+      <div class="left-col">
+        <!-- Table Felt Area -->
+        <div class="poker-table">
+          <!-- Community Cards Section (Position 1: Top) with Clear Street Grouping -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title-wrap">
+                <span class="section-title">公共牌 (Community Board)</span>
+                <button class="btn-clear-section" @click="clearBoardCards" v-if="boardCount > 0">
+                  ✕ 清空公共牌
+                </button>
+              </div>
+              <span style="color:#58a6ff; font-size:12px; font-weight:700;">已出 {{ boardCount }} / 5 张</span>
+            </div>
+
+            <div class="board-container">
+              <!-- 翻牌圈 Flop (3 cards) -->
+              <div class="street-group street-flop">
+                <div class="street-badge">
+                  <span>翻牌圈 (Flop)</span>
+                </div>
+                <div class="street-cards">
+                  <div 
+                    v-for="idx in [0, 1, 2]" 
+                    :key="'board-'+idx"
+                    class="card-slot-wrapper"
+                  >
+                    <div
+                      :class="['card-slot', { active: activeSlot === 'board-'+idx, filled: !!boardCards[idx] }]"
+                      @click="setActiveSlot('board-'+idx)"
+                    >
+                      <template v-if="boardCards[idx]">
+                        <div class="card-corner-top">
+                          <span :class="['card-val', 'suit-' + boardCards[idx].suit]">{{ boardCards[idx].rank }}</span>
+                          <span :class="['card-suit-corner', 'suit-' + boardCards[idx].suit]">{{ getSuitIcon(boardCards[idx].suit) }}</span>
+                        </div>
+                        <div :class="['card-suit-big', 'suit-' + boardCards[idx].suit]">{{ getSuitIcon(boardCards[idx].suit) }}</div>
+                      </template>
+                      <div v-else class="slot-empty-content">
+                        <span class="slot-plus-icon">+</span>
+                        <span class="slot-label">{{ getBoardSlotLabel(idx) }}</span>
+                      </div>
+                    </div>
+                    <button 
+                      class="btn-card-del"
+                      :class="{ visible: !!boardCards[idx] }"
+                      @click.stop="clearSingleBoardCard(idx)"
+                      title="删除此牌"
+                    >
+                      ✕ 删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="street-divider"></div>
+
+              <!-- 转牌 Turn (1 card) -->
+              <div class="street-group street-turn">
+                <div class="street-badge">
+                  <span>转牌 (Turn)</span>
+                </div>
+                <div class="street-cards">
+                  <div class="card-slot-wrapper">
+                    <div 
+                      :class="['card-slot', { active: activeSlot === 'board-3', filled: !!boardCards[3] }]"
+                      @click="setActiveSlot('board-3')"
+                    >
+                      <template v-if="boardCards[3]">
+                        <div class="card-corner-top">
+                          <span :class="['card-val', 'suit-' + boardCards[3].suit]">{{ boardCards[3].rank }}</span>
+                          <span :class="['card-suit-corner', 'suit-' + boardCards[3].suit]">{{ getSuitIcon(boardCards[3].suit) }}</span>
+                        </div>
+                        <div :class="['card-suit-big', 'suit-' + boardCards[3].suit]">{{ getSuitIcon(boardCards[3].suit) }}</div>
+                      </template>
+                      <div v-else class="slot-empty-content">
+                        <span class="slot-plus-icon">+</span>
+                        <span class="slot-label">转牌</span>
+                      </div>
+                    </div>
+                    <button 
+                      class="btn-card-del"
+                      :class="{ visible: !!boardCards[3] }"
+                      @click.stop="clearSingleBoardCard(3)"
+                      title="删除此牌"
+                    >
+                      ✕ 删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="street-divider"></div>
+
+              <!-- 河牌 River (1 card) -->
+              <div class="street-group street-river">
+                <div class="street-badge">
+                  <span>河牌 (River)</span>
+                </div>
+                <div class="street-cards">
+                  <div class="card-slot-wrapper">
+                    <div 
+                      :class="['card-slot', { active: activeSlot === 'board-4', filled: !!boardCards[4] }]"
+                      @click="setActiveSlot('board-4')"
+                    >
+                      <template v-if="boardCards[4]">
+                        <div class="card-corner-top">
+                          <span :class="['card-val', 'suit-' + boardCards[4].suit]">{{ boardCards[4].rank }}</span>
+                          <span :class="['card-suit-corner', 'suit-' + boardCards[4].suit]">{{ getSuitIcon(boardCards[4].suit) }}</span>
+                        </div>
+                        <div :class="['card-suit-big', 'suit-' + boardCards[4].suit]">{{ getSuitIcon(boardCards[4].suit) }}</div>
+                      </template>
+                      <div v-else class="slot-empty-content">
+                        <span class="slot-plus-icon">+</span>
+                        <span class="slot-label">河牌</span>
+                      </div>
+                    </div>
+                    <button 
+                      class="btn-card-del"
+                      :class="{ visible: !!boardCards[4] }"
+                      @click.stop="clearSingleBoardCard(4)"
+                      title="删除此牌"
+                    >
+                      ✕ 删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Card Section (Position 2: Bottom) -->
+          <div class="section-card hero-active">
+            <div class="section-header">
+              <div class="section-title-wrap">
+                <span class="badge-hero">YOU</span>
+                <span class="section-title">你的手牌 (Hero)</span>
+                <button class="btn-clear-section" @click="clearHeroCards" v-if="heroCount > 0">
+                  ✕ 清空手牌
+                </button>
+              </div>
+              <span style="font-size:12px; color:var(--text-muted);">已选 {{ heroCount }} / 2 张</span>
+            </div>
+
+            <div class="hero-container">
+              <div class="card-slots">
+                <div 
+                  v-for="(c, idx) in heroCards" 
+                  :key="'hero-'+idx"
+                  class="card-slot-wrapper"
+                >
+                  <div
+                    :class="['card-slot', { active: activeSlot === 'hero-'+idx, filled: !!c }]"
+                    @click="setActiveSlot('hero-'+idx)"
+                  >
+                    <template v-if="c">
+                      <div class="card-corner-top">
+                        <span :class="['card-val', 'suit-' + c.suit]">{{ c.rank }}</span>
+                        <span :class="['card-suit-corner', 'suit-' + c.suit]">{{ getSuitIcon(c.suit) }}</span>
+                      </div>
+                      <div :class="['card-suit-big', 'suit-' + c.suit]">{{ getSuitIcon(c.suit) }}</div>
+                    </template>
+                    <div v-else class="slot-empty-content">
+                      <span class="slot-plus-icon">+</span>
+                      <span class="slot-label">手牌 {{ idx + 1 }}</span>
+                    </div>
+                  </div>
+                  <button 
+                    class="btn-card-del"
+                    :class="{ visible: !!c }"
+                    @click.stop="clearSingleHeroCard(idx)"
+                    title="删除此牌"
+                  >
+                    ✕ 删除
+                  </button>
+                </div>
+              </div>
+
+              <!-- Current Hand Strength Banner beside Hero cards -->
+              <div class="hero-hand-info-box">
+                <div class="hero-hand-label">{{ boardCount === 0 ? '翻牌前起手牌力' : '当前成牌牌力' }}</div>
+                <div class="hero-hand-val" v-if="heroHandEvaluation">
+                  {{ heroHandEvaluation.title }}
+                  <span class="hero-hand-sub">({{ heroHandEvaluation.desc }})</span>
+                </div>
+                <div class="hero-hand-val empty-hint" v-else-if="!hasFullHero">
+                  请先选满 2 张手牌
+                </div>
+                <div class="hero-hand-val empty-hint" v-else>
+                  翻牌圈请选择至少 3 张公共牌
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 52 Card Selector Matrix -->
+        <div class="selector-panel">
+          <div class="section-header">
+            <span class="section-title">点击扑克牌填入当前槽位 (当前: {{ getCurrentSlotName }})</span>
+            <button class="btn" style="padding: 3px 8px; font-size:11px;" @click="clearActiveSlot" v-if="hasActiveCard">
+              清空该卡槽
+            </button>
+          </div>
+
+          <div class="suit-rows">
+            <div v-for="suit in suits" :key="suit.key" class="suit-row">
+              <div :class="['suit-label', 'suit-' + suit.key]">{{ suit.icon }}</div>
+              <button 
+                v-for="rank in ranks" 
+                :key="suit.key + rank"
+                :class="['rank-btn', 'suit-' + suit.key]"
+                :disabled="isCardUsed(rank, suit.key)"
+                @click="selectCard(rank, suit.key)"
+              >
+                {{ rank }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Summary & All Beating Combinations -->
+      <div class="right-col">
+        <!-- Status Banner -->
+        <div 
+          :class="['analysis-summary-box', 
+            ((boardCount === 0 && hasFullHero) || boardCount >= 3)
+              ? (beatingCombos.length === 0 ? 'nuts' : 'beaten')
+              : 'wait'
+          ]"
+        >
+          <div class="summary-left">
+            <template v-if="!hasFullHero">
+              <h2>⏳ 请选满 2 张手牌</h2>
+              <p>选满手牌即可即时分析起手牌被压制情况与行动建议；填入公共牌可分析成牌压制</p>
+            </template>
+            <template v-else-if="boardCount > 0 && boardCount < 3">
+              <h2>⏳ 请补全翻牌圈公共牌 (至少 3 张)</h2>
+              <p>德州扑克翻牌圈为 3 张公共牌，请继续选择公共牌以评估完整成牌</p>
+            </template>
+            <template v-else-if="beatingCombos.length === 0">
+              <h2 style="color: #f1e05a;">👑 绝对坚果牌 (The Absolute Nuts)！</h2>
+              <p v-if="boardCount === 0">顶级起手牌（AA 无任何压制底牌）！在翻牌前处于绝对最高胜率与统治地位！</p>
+              <p v-else>当前牌面下，全牌库中没有任何手牌能大过你！你处于绝对无敌状态！</p>
+            </template>
+            <template v-else>
+              <h2 style="color: #ff7b72;">⚠️ 共有 {{ beatingCombos.length }} 种手牌组合大于你的牌</h2>
+              <p v-if="boardCount === 0">翻牌前对手任意两张未知底牌，起手压制你的概率为 {{ beatingRatio }}% ({{ beatingCombos.length }} / 1225 种组合)</p>
+              <p v-else>若对手持有任意两张未知牌，其当前成牌超过你的概率为 {{ beatingRatio }}%</p>
+            </template>
+
+            <!-- 建议操作栏 Action Recommendation -->
+            <div class="action-recommendation-bar" v-if="hasFullHero && (boardCount === 0 || boardCount >= 3)">
+              <span class="action-rec-lead">建议操作 <span class="action-rec-disclaimer">（仅供参考，概不负责）</span>：</span>
+              <div :class="['action-rec-pill', actionAdvice.badgeClass]">
+                <span>{{ actionAdvice.icon }}</span>
+                <span class="action-rec-name">{{ actionAdvice.action }}</span>
+              </div>
+              <div class="action-rec-desc">{{ actionAdvice.desc }}</div>
+            </div>
+          </div>
+
+          <div class="summary-right-metrics" v-if="hasFullHero && (boardCount === 0 || boardCount >= 3)">
+            <div class="metric-item">
+              <div class="metric-val" :style="{ color: beatingCombos.length === 0 ? '#f1e05a' : '#ff7b72' }">
+                {{ beatingCombos.length }}
+              </div>
+              <div class="metric-label">压制组合数</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-val" style="color: #3fb950;">
+                {{ (100 - parseFloat(beatingRatio)).toFixed(1) }}%
+              </div>
+              <div class="metric-label">不被压制率</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Beating Combinations List Panel -->
+        <div class="beating-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <span>大于你的手牌组合清单 (共 {{ beatingCombos.length }} 种)</span>
+            </div>
+          </div>
+
+          <!-- Category filter tabs -->
+          <div class="category-tabs" v-if="beatingCombos.length > 0">
+            <button 
+              :class="['cat-tab', { active: selectedCat === 'all' }]"
+              @click="selectedCat = 'all'"
+            >
+              全部 ({{ beatingCombos.length }})
+            </button>
+            <button 
+              v-for="cat in availableCategories" 
+              :key="cat.name"
+              :class="['cat-tab', { 
+                active: selectedCat === cat.name,
+                royal: cat.isRoyal
+              }]"
+              @click="selectedCat = cat.name"
+            >
+              <span v-if="cat.isRoyal">👑</span>
+              {{ cat.name }} ({{ cat.count }})
+            </button>
+          </div>
+
+          <!-- Cards Grid -->
+          <div v-if="filteredCombos.length > 0" class="combos-grid">
+            <div 
+              v-for="(combo, idx) in filteredCombos" 
+              :key="idx" 
+              :class="['combo-card', { 'is-royal': combo.isRoyal }]"
+            >
+              <div class="combo-left">
+                <div class="mini-pair">
+                  <div class="mini-card">
+                    <span :class="['mv', 'suit-' + combo.card1.suit]">{{ combo.card1.rank }}</span>
+                    <span :class="['ms', 'suit-' + combo.card1.suit]">{{ getSuitIcon(combo.card1.suit) }}</span>
+                  </div>
+                  <div class="mini-card">
+                    <span :class="['mv', 'suit-' + combo.card2.suit]">{{ combo.card2.rank }}</span>
+                    <span :class="['ms', 'suit-' + combo.card2.suit]">{{ getSuitIcon(combo.card2.suit) }}</span>
+                  </div>
+                </div>
+                <div class="combo-details">
+                  <span :class="['combo-hand-name', { 'royal-text': combo.isRoyal }]">
+                    <template v-if="combo.isRoyal">👑 </template>{{ combo.handTitle }}
+                  </span>
+                  <span class="combo-sub">{{ combo.handDesc }}</span>
+                </div>
+              </div>
+              <div :class="['combo-rank-tag', { 'royal-tag': combo.isRoyal }]">
+                {{ combo.categoryName }}
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="!hasFullHero" class="empty-state">
+            <span class="empty-icon">🎴</span>
+            <span>请在左侧选满 2 张手牌</span>
+          </div>
+
+          <div v-else-if="boardCount > 0 && boardCount < 3" class="empty-state">
+            <span class="empty-icon">🎴</span>
+            <span>德州扑克翻牌圈需要至少 3 张公共牌，请继续选择</span>
+          </div>
+
+          <div v-else class="empty-state">
+            <span class="empty-icon">🏆</span>
+            <span style="color: #f1e05a; font-weight:700; font-size:15px;">当前没有任何手牌能大过你！</span>
+            <span v-if="boardCount === 0">你的起手牌为顶峰 AA，没有任何起手手牌能在翻牌前压制你！</span>
+            <span v-else>你在当前牌面下处于绝对坚果地位。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+    const RANK_VALS = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+    const RANK_NAMES = { '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', '10': '10', '11': 'J', '12': 'Q', '13': 'K', '14': 'A' };
+    const SUITS = [
+      { key: 's', icon: '♠' },
+      { key: 'h', icon: '♥' },
+      { key: 'c', icon: '♣' },
+      { key: 'd', icon: '♦' }
+    ];
+
+    // 德州扑克经典 169 种起手牌强弱标准排名表 (第1到第169)
+    const PREFLOP_RANKED_HANDS = [
+      "AA", "KK", "QQ", "JJ", "AKs", "TT", "AQs", "KQs", "AJs", "AKo", 
+      "99", "ATs", "AQo", "KJs", "88", "QJs", "KTs", "A9s", "AJo", "JTs", 
+      "77", "A8s", "KQo", "ATo", "A7s", "A5s", "66", "T9s", "A4s", "QTs", "A9o", 
+      "KJo", "A6s", "55", "A3s", "K9s", "98s", "J9s", "A2s", "A8o", "KTo", 
+      "Q9s", "44", "A7o", "87s", "T8s", "QJo", "33", "22", "A5o", "76s", 
+      "K8s", "A4o", "J8s", "Q8s", "97s", "A6o", "K7s", "T7s", "A3o", "65s", 
+      "QTo", "86s", "K6s", "A2o", "JTo", "75s", "54s", "K5s", "96s", "K9o", 
+      "Q7s", "85s", "64s", "K4s", "T6s", "Q6s", "74s", "53s", "K3s", "J7s", 
+      "95s", "K8o", "63s", "K2s", "84s", "43s", "Q5s", "T9o", "52s", "73s", 
+      "98o", "Q4s", "J6s", "62s", "87o", "42s", "Q3s", "T5s", "83s", "76o", 
+      "Q2s", "J5s", "94s", "32s", "82s", "J4s", "T4s", "65o", "93s", "72s", 
+      "J3s", "T3s", "92s", "54o", "J2s", "T2s", "Q9o", "J9o", "86o", "T8o", 
+      "75o", "97o", "K7o", "64o", "85o", "53o", "Q8o", "96o", "43o", "K6o", 
+      "J8o", "74o", "T7o", "K5o", "63o", "84o", "K4o", "95o", "52o", "Q7o", 
+      "73o", "K3o", "42o", "62o", "K2o", "83o", "T6o", "J7o", "82o", "Q6o", 
+      "94o", "72o", "32o", "Q5o", "93o", "J6o", "T5o", "92o", "Q4o", "J5o", 
+      "T4o", "Q3o", "J4o", "T3o", "Q2o", "J3o", "T2o", "J2o"
+    ];
+
+    const PREFLOP_RANK_MAP = {};
+    PREFLOP_RANKED_HANDS.forEach((h, idx) => {
+      PREFLOP_RANK_MAP[h] = idx + 1;
+    });
+
+    function getHandKey(c1, c2) {
+      let a = c1, b = c2;
+      if (a.val < b.val) {
+        a = c2; b = c1;
+      }
+      if (a.val === b.val) {
+        return a.rank + b.rank;
+      }
+      const suited = (a.suit === b.suit) ? 's' : 'o';
+      return a.rank + b.rank + suited;
+    }
+
+    function getPreflopHandName(key) {
+      if (key[0] === key[1]) {
+        return `口袋对 ${key[0]}${key[1]}`;
+      }
+      const isSuited = key.endsWith('s');
+      const typeStr = isSuited ? '同色 (Suited)' : '不同色 (Offsuit)';
+      return `${key[0]}${key[1]} ${typeStr}`;
+    }
+
+    // 预生成 7 选 5 的 21 种组合索引
+    const COMBOS_7_5 = [];
+    for (let a = 0; a < 7; a++) {
+      for (let b = a + 1; b < 7; b++) {
+        for (let c = b + 1; c < 7; c++) {
+          for (let d = c + 1; d < 7; d++) {
+            for (let e = d + 1; e < 7; e++) {
+              COMBOS_7_5.push([a, b, c, d, e]);
+            }
+          }
+        }
+      }
+    }
+
+    // 6 选 5 的 6 种组合索引
+    const COMBOS_6_5 = [];
+    for (let a = 0; a < 6; a++) {
+      for (let b = a + 1; b < 6; b++) {
+        for (let c = b + 1; c < 6; c++) {
+          for (let d = c + 1; d < 6; d++) {
+            for (let e = d + 1; e < 6; e++) {
+              COMBOS_6_5.push([a, b, c, d, e]);
+            }
+          }
+        }
+      }
+    }
+
+    // 评估 5 张牌的牌力
+    function evaluate5(c0, c1, c2, c3, c4) {
+      const ranks = [c0.val, c1.val, c2.val, c3.val, c4.val].sort((x, y) => y - x);
+      const isFlush = (c0.suit === c1.suit && c0.suit === c2.suit && c0.suit === c3.suit && c0.suit === c4.suit);
+
+      // 顺子判断
+      let isStraight = false;
+      let straightHigh = 0;
+      if (ranks[0] - ranks[4] === 4 && new Set(ranks).size === 5) {
+        isStraight = true;
+        straightHigh = ranks[0];
+      } else if (ranks[0] === 14 && ranks[1] === 5 && ranks[2] === 4 && ranks[3] === 3 && ranks[4] === 2) {
+        isStraight = true;
+        straightHigh = 5; // A-2-3-4-5 顺子以 5 为顶
+      }
+
+      // 皇家同花顺 与 同花顺 严格区分
+      if (isStraight && isFlush) {
+        if (straightHigh === 14) {
+          // 皇家同花顺 (Royal Flush): 10, J, Q, K, A 同花
+          return { 
+            score: (9 << 20) | (straightHigh << 16), 
+            catIndex: 9, 
+            title: '皇家同花顺', 
+            desc: 'A-K-Q-J-10 同花 (牌力最顶级)',
+            isRoyal: true 
+          };
+        }
+        return { 
+          score: (8 << 20) | (straightHigh << 16), 
+          catIndex: 8, 
+          title: '同花顺', 
+          desc: `${RANK_NAMES[straightHigh]} 高同花顺`,
+          isRoyal: false 
+        };
+      }
+
+      const counts = {};
+      for (let r of ranks) counts[r] = (counts[r] || 0) + 1;
+      const countEntries = Object.entries(counts).map(([r, count]) => ({ rank: Number(r), count }));
+      countEntries.sort((a, b) => (b.count - a.count) || (b.rank - a.rank));
+
+      if (countEntries[0].count === 4) {
+        const fourR = countEntries[0].rank;
+        const kick = countEntries[1].rank;
+        return { 
+          score: (7 << 20) | (fourR << 16) | (kick << 12), 
+          catIndex: 7, 
+          title: '四条 (金刚)', 
+          desc: `四条 ${RANK_NAMES[fourR]} (带 ${RANK_NAMES[kick]})`,
+          isRoyal: false
+        };
+      }
+      if (countEntries[0].count === 3 && countEntries[1].count === 2) {
+        const tripR = countEntries[0].rank;
+        const pairR = countEntries[1].rank;
+        return { 
+          score: (6 << 20) | (tripR << 16) | (pairR << 12), 
+          catIndex: 6, 
+          title: '葫芦 (满堂红)', 
+          desc: `葫芦 ${RANK_NAMES[tripR]} 满 ${RANK_NAMES[pairR]}`,
+          isRoyal: false
+        };
+      }
+      if (isFlush) {
+        return { 
+          score: (5 << 20) | (ranks[0] << 16) | (ranks[1] << 12) | (ranks[2] << 8) | (ranks[3] << 4) | ranks[4], 
+          catIndex: 5, 
+          title: '同花', 
+          desc: `${RANK_NAMES[ranks[0]]} 高同花`,
+          isRoyal: false
+        };
+      }
+      if (isStraight) {
+        return { 
+          score: (4 << 20) | (straightHigh << 16), 
+          catIndex: 4, 
+          title: '顺子', 
+          desc: `${RANK_NAMES[straightHigh]} 高顺子`,
+          isRoyal: false
+        };
+      }
+      if (countEntries[0].count === 3) {
+        const tripR = countEntries[0].rank;
+        return { 
+          score: (3 << 20) | (tripR << 16) | (countEntries[1].rank << 12) | (countEntries[2].rank << 8), 
+          catIndex: 3, 
+          title: '三条', 
+          desc: `三条 ${RANK_NAMES[tripR]}`,
+          isRoyal: false
+        };
+      }
+      if (countEntries[0].count === 2 && countEntries[1].count === 2) {
+        const p1 = countEntries[0].rank;
+        const p2 = countEntries[1].rank;
+        const kick = countEntries[2].rank;
+        return { 
+          score: (2 << 20) | (p1 << 16) | (p2 << 12) | (kick << 8), 
+          catIndex: 2, 
+          title: '两对', 
+          desc: `两对 ${RANK_NAMES[p1]} 和 ${RANK_NAMES[p2]}`,
+          isRoyal: false
+        };
+      }
+      if (countEntries[0].count === 2) {
+        const p1 = countEntries[0].rank;
+        return { 
+          score: (1 << 20) | (p1 << 16) | (countEntries[1].rank << 12) | (countEntries[2].rank << 8) | (countEntries[3].rank << 4), 
+          catIndex: 1, 
+          title: '一对', 
+          desc: `一对 ${RANK_NAMES[p1]}`,
+          isRoyal: false
+        };
+      }
+      return { 
+        score: (0 << 20) | (ranks[0] << 16) | (ranks[1] << 12) | (ranks[2] << 8) | (ranks[3] << 4) | ranks[4], 
+        catIndex: 0, 
+        title: '高牌', 
+        desc: `${RANK_NAMES[ranks[0]]} 高牌`,
+        isRoyal: false
+      };
+    }
+
+    // 从 5、6 或 7 张牌中求最大牌力
+    function evaluateBestHand(cards) {
+      if (cards.length === 5) {
+        return evaluate5(cards[0], cards[1], cards[2], cards[3], cards[4]);
+      }
+      if (cards.length === 6) {
+        let best = null;
+        for (let i = 0; i < 6; i++) {
+          const [i0, i1, i2, i3, i4] = COMBOS_6_5[i];
+          const res = evaluate5(cards[i0], cards[i1], cards[i2], cards[i3], cards[i4]);
+          if (!best || res.score > best.score) best = res;
+        }
+        return best;
+      }
+      if (cards.length === 7) {
+        let best = null;
+        for (let i = 0; i < 21; i++) {
+          const [i0, i1, i2, i3, i4] = COMBOS_7_5[i];
+          const res = evaluate5(cards[i0], cards[i1], cards[i2], cards[i3], cards[i4]);
+          if (!best || res.score > best.score) best = res;
+        }
+        return best;
+      }
+      return null;
+    }
+
+    createApp({
+      setup() {
+        const suits = SUITS;
+        const ranks = RANKS;
+
+        const heroCards = ref([null, null]);
+        const boardCards = ref([null, null, null, null, null]);
+
+        // 当前激活的选牌槽位: 'hero-0', 'hero-1', 'board-0', ...
+        const activeSlot = ref('hero-0');
+        const selectedCat = ref('all');
+
+        const slotOrder = [
+          'hero-0', 'hero-1',
+          'board-0', 'board-1', 'board-2', 'board-3', 'board-4'
+        ];
+
+        const heroCount = computed(() => heroCards.value.filter(c => c !== null).length);
+        const boardCount = computed(() => boardCards.value.filter(c => c !== null).length);
+        const hasFullHero = computed(() => heroCards.value[0] !== null && heroCards.value[1] !== null);
+
+        const clearHeroCards = () => {
+          heroCards.value = [null, null];
+          activeSlot.value = 'hero-0';
+        };
+
+        const clearBoardCards = () => {
+          boardCards.value = [null, null, null, null, null];
+          activeSlot.value = 'board-0';
+        };
+
+        const clearSingleBoardCard = (idx) => {
+          boardCards.value[idx] = null;
+          activeSlot.value = 'board-' + idx;
+        };
+
+        const clearSingleHeroCard = (idx) => {
+          heroCards.value[idx] = null;
+          activeSlot.value = 'hero-' + idx;
+        };
+
+        const getSuitIcon = (suitKey) => {
+          const s = SUITS.find(item => item.key === suitKey);
+          return s ? s.icon : '';
+        };
+
+        const getBoardSlotLabel = (idx) => {
+          if (idx < 3) return 'Flop ' + (idx + 1);
+          if (idx === 3) return 'Turn';
+          return 'River';
+        };
+
+        const getCurrentSlotName = computed(() => {
+          if (!activeSlot.value) return '未选定';
+          if (activeSlot.value.startsWith('hero')) return '我的手牌 ' + (Number(activeSlot.value.split('-')[1]) + 1);
+          const bIdx = Number(activeSlot.value.split('-')[1]);
+          return '公共牌 ' + getBoardSlotLabel(bIdx);
+        });
+
+        const isCardUsed = (rank, suit) => {
+          const all = [...heroCards.value, ...boardCards.value];
+          return all.some(c => c && c.rank === rank && c.suit === suit);
+        };
+
+        const hasActiveCard = computed(() => {
+          if (!activeSlot.value) return false;
+          const [type, idxStr] = activeSlot.value.split('-');
+          const idx = Number(idxStr);
+          if (type === 'hero') return !!heroCards.value[idx];
+          if (type === 'board') return !!boardCards.value[idx];
+          return false;
+        });
+
+        const setActiveSlot = (slot) => {
+          activeSlot.value = slot;
+        };
+
+        const clearActiveSlot = () => {
+          if (!activeSlot.value) return;
+          const [type, idxStr] = activeSlot.value.split('-');
+          const idx = Number(idxStr);
+          if (type === 'hero') heroCards.value[idx] = null;
+          else if (type === 'board') boardCards.value[idx] = null;
+        };
+
+        const selectCard = (rank, suit) => {
+          if (!activeSlot.value) activeSlot.value = 'hero-0';
+          const [type, idxStr] = activeSlot.value.split('-');
+          const idx = Number(idxStr);
+          const cardObj = { rank, suit, val: RANK_VALS[rank] };
+
+          if (type === 'hero') heroCards.value[idx] = cardObj;
+          else if (type === 'board') boardCards.value[idx] = cardObj;
+
+          // 自动跳转到下一个空卡槽
+          const curIndex = slotOrder.indexOf(activeSlot.value);
+          for (let i = 1; i <= slotOrder.length; i++) {
+            const nextSlot = slotOrder[(curIndex + i) % slotOrder.length];
+            const [nType, nIdx] = nextSlot.split('-');
+            const val = nType === 'hero' ? heroCards.value[nIdx] : boardCards.value[nIdx];
+            if (!val) {
+              activeSlot.value = nextSlot;
+              break;
+            }
+          }
+        };
+
+        // Hero 当前牌力计算 (支持翻牌前 2 张手牌与翻牌后 3-5 张公共牌)
+        const heroHandEvaluation = computed(() => {
+          const hero = heroCards.value.filter(c => c !== null);
+          const board = boardCards.value.filter(c => c !== null);
+          if (hero.length < 2) return null;
+
+          // 1. 翻牌前仅有 2 张手牌
+          if (board.length === 0) {
+            const key = getHandKey(hero[0], hero[1]);
+            const rankNo = PREFLOP_RANK_MAP[key] || 100;
+            let title = getPreflopHandName(key);
+            let desc = `起手排名 #${rankNo}/169`;
+            if (rankNo === 1) desc += ' · 绝对最强起手底牌';
+            else if (rankNo <= 5) desc += ' · 顶级超强起手底牌';
+            else if (rankNo <= 15) desc += ' · 强力起手底牌';
+            return {
+              score: (170 - rankNo),
+              catIndex: 0,
+              title,
+              desc,
+              isRoyal: false,
+              isPreflop: true,
+              preflopRank: rankNo,
+              preflopKey: key
+            };
+          }
+
+          // 2. 翻牌后需至少 3 张公共牌
+          if (board.length < 3) return null;
+          return evaluateBestHand([...hero, ...board]);
+        });
+
+        // 穷举全牌库大于 Hero 的所有对手 2 张手牌组合
+        const beatingCombos = computed(() => {
+          const heroEval = heroHandEvaluation.value;
+          if (!heroEval) return [];
+
+          const hero = heroCards.value.filter(c => c !== null);
+          const board = boardCards.value.filter(c => c !== null);
+
+          // 已知牌集合
+          const usedSet = new Set();
+          for (let c of [...hero, ...board]) {
+            usedSet.add(c.rank + c.suit);
+          }
+
+          // 剩余未知牌池
+          const remainingDeck = [];
+          for (let r of RANKS) {
+            for (let s of SUITS) {
+              if (!usedSet.has(r + s.key)) {
+                remainingDeck.push({ rank: r, suit: s.key, val: RANK_VALS[r] });
+              }
+            }
+          }
+
+          const results = [];
+          const N = remainingDeck.length;
+
+          // 1. 翻牌前模式 (无公共牌，仅有 2 张手牌)：按 169 种起手牌标准强弱排名穷举
+          if (board.length === 0 && hero.length === 2) {
+            const heroRankNo = heroEval.preflopRank || 169;
+            for (let i = 0; i < N; i++) {
+              const card1 = remainingDeck[i];
+              for (let j = i + 1; j < N; j++) {
+                const card2 = remainingDeck[j];
+                const oppKey = getHandKey(card1, card2);
+                const oppRankNo = PREFLOP_RANK_MAP[oppKey] || 170;
+
+                if (oppRankNo < heroRankNo) {
+                  const catName = oppKey[0] === oppKey[1] 
+                    ? `口袋对 ${oppKey}` 
+                    : (oppKey.endsWith('s') ? `${oppKey[0]}${oppKey[1]} 同色` : `${oppKey[0]}${oppKey[1]} 杂色`);
+                  results.push({
+                    card1,
+                    card2,
+                    score: (170 - oppRankNo),
+                    catIndex: 0,
+                    categoryName: catName,
+                    handTitle: getPreflopHandName(oppKey),
+                    handDesc: `起手排名 #${oppRankNo}/169 (压制你的 #${heroRankNo})`,
+                    isRoyal: false
+                  });
+                }
+              }
+            }
+            results.sort((a, b) => b.score - a.score);
+            return results;
+          }
+
+          // 2. 翻牌圈/转牌圈/河牌圈模式 (至少 3 张公共牌)：全量评估成牌牌力
+          const heroScore = heroEval.score;
+          for (let i = 0; i < N; i++) {
+            const card1 = remainingDeck[i];
+            for (let j = i + 1; j < N; j++) {
+              const card2 = remainingDeck[j];
+              const oppCards = [card1, card2, ...board];
+              const oppEval = evaluateBestHand(oppCards);
+
+              if (oppEval && oppEval.score > heroScore) {
+                results.push({
+                  card1,
+                  card2,
+                  score: oppEval.score,
+                  catIndex: oppEval.catIndex,
+                  categoryName: oppEval.title,
+                  handTitle: oppEval.title,
+                  handDesc: oppEval.desc,
+                  isRoyal: !!oppEval.isRoyal
+                });
+              }
+            }
+          }
+
+          // 按照对手牌力从大到小排序 (皇家同花顺排在最前面)
+          results.sort((a, b) => b.score - a.score);
+          return results;
+        });
+
+        // 压制比例 (压制组合数 / 总剩余组合数)
+        const beatingRatio = computed(() => {
+          const hero = heroCards.value.filter(c => c !== null);
+          const board = boardCards.value.filter(c => c !== null);
+          if (hero.length < 2) return '0.0';
+          if (board.length > 0 && board.length < 3) return '0.0';
+          const N = 52 - (hero.length + board.length);
+          const totalCombos = (N * (N - 1)) / 2;
+          if (totalCombos === 0) return '0.0';
+          return ((beatingCombos.value.length / totalCombos) * 100).toFixed(1);
+        });
+
+        // 建议操作决策模型：全下（All-in）、加注（Raise）、跟注（Call）、Check（过牌）、弃牌（Flod）
+        const actionAdvice = computed(() => {
+          const hero = heroCards.value.filter(c => c !== null);
+          const board = boardCards.value.filter(c => c !== null);
+          if (hero.length < 2) {
+            return {
+              action: '等待手牌',
+              icon: '⏳',
+              desc: '请选满 2 张手牌以获取起手牌压制分析与行动建议',
+              badgeClass: 'badge-wait'
+            };
+          }
+
+          // 翻牌前模式（0张公共牌）专属起手牌行动策略
+          if (board.length === 0) {
+            const heroEval = heroHandEvaluation.value;
+            const rankNo = heroEval ? (heroEval.preflopRank || 100) : 100;
+            const beatenPct = parseFloat(beatingRatio.value);
+            const winRate = (100 - beatenPct).toFixed(1);
+
+            // 1. 全下（All-in）：AA, KK 顶级起手牌
+            if (rankNo <= 2) {
+              return {
+                action: '全下（All-in）',
+                icon: '🚀',
+                desc: `顶级超强对子起手牌（排名 #${rankNo}/169，不被压制率 ${winRate}%），统治力极强，翻牌前建议全下（All-in）斩获最大价值！`,
+                badgeClass: 'badge-allin'
+              };
+            }
+
+            // 2. 加注（Raise）：QQ, JJ, AKs, TT, AQs, KQs, AJs, AKo, 99, ATs 等前 20 顶级起手强牌
+            if (rankNo <= 20) {
+              return {
+                action: '加注（Raise）',
+                icon: '🔥',
+                desc: `强力起手底牌（前12%强牌，排名 #${rankNo}/169，不被压制率 ${winRate}%），建议主动加注（Raise/3-bet）建立底池优势！`,
+                badgeClass: 'badge-raise'
+              };
+            }
+
+            // 3. 跟注（Call）：中等口袋对、同花高牌、同花连张 (Rank 21 ~ 55)
+            if (rankNo <= 55) {
+              return {
+                action: '跟注（Call）',
+                icon: '🛡️',
+                desc: `优质起手投机牌（排名 #${rankNo}/169），适合跟注看翻牌（Flat Call），争取击中暗三条或强同花/顺子听牌！`,
+                badgeClass: 'badge-call'
+              };
+            }
+
+            // 4. Check（过牌）：边缘底牌 (Rank 56 ~ 95)
+            if (rankNo <= 95) {
+              return {
+                action: 'Check（过牌）',
+                icon: '⚖️',
+                desc: `边缘起手牌（排名 #${rankNo}/169），若无人加注可免费过牌（Check）看翻牌，面对前方大额加注建议果断放弃！`,
+                badgeClass: 'badge-check'
+              };
+            }
+
+            // 5. 弃牌（Flod）：Rank > 95 的杂色弱牌
+            return {
+              action: '弃牌（Flod）',
+              icon: '🏳️',
+              desc: `劣质垃圾底牌（排名 #${rankNo}/169，超 ${beatenPct}% 起手牌压制你），极易被强牌全面压制，建议直接弃牌（Flod）止损！`,
+              badgeClass: 'badge-fold'
+            };
+          }
+
+          if (board.length < 3) {
+            return {
+              action: '等待翻牌',
+              icon: '⏳',
+              desc: '请选满至少 3 张公共牌以获取成牌实时决策建议',
+              badgeClass: 'badge-wait'
+            };
+          }
+
+          const beatenCount = beatingCombos.value.length;
+          const beatenPct = parseFloat(beatingRatio.value);
+          const winRate = 100 - beatenPct;
+
+          // 1. 全下（All-in）：绝对坚果牌，没有任何手牌大于自己
+          if (beatenCount === 0) {
+            return {
+              action: '全下（All-in）',
+              icon: '🚀',
+              desc: '绝对坚果牌！当前牌面没有任何对手能超越你，果断 All-in 斩获最大价值！',
+              badgeClass: 'badge-allin'
+            };
+          }
+
+          // 2. 加注（Raise）：极高胜率压制（不被压制率 >= 92%）
+          if (winRate >= 92) {
+            return {
+              action: '加注（Raise）',
+              icon: '🔥',
+              desc: `强力压制牌型（${winRate.toFixed(1)}% 领先），对手极难超越，建议主动作大底池！`,
+              badgeClass: 'badge-raise'
+            };
+          }
+
+          // 3. 跟注（Call）：良好胜率（不被压制率 75% ~ 92%）
+          if (winRate >= 75) {
+            return {
+              action: '跟注（Call）',
+              icon: '🛡️',
+              desc: `中高成牌牌力（${winRate.toFixed(1)}% 胜率），存在一定潜在危险，适合跟注控制底池！`,
+              badgeClass: 'badge-call'
+            };
+          }
+
+          // 4. Check（过牌）：中等/边缘牌力（不被压制率 45% ~ 75%）
+          if (winRate >= 45) {
+            return {
+              action: 'Check（过牌）',
+              icon: '⚖️',
+              desc: `边缘摊牌牌力（${winRate.toFixed(1)}% 胜率），优势不明显，建议免费过牌控池！`,
+              badgeClass: 'badge-check'
+            };
+          }
+
+          // 5. 弃牌（Flod）：重度劣势（不被压制率 < 45%，压制率 > 55%）
+          return {
+            action: '弃牌（Flod）',
+            icon: '🏳️',
+            desc: `重度危险劣势（超 ${beatenPct.toFixed(1)}% 组合压制你），面对任何反抗下注果断弃牌止损！`,
+            badgeClass: 'badge-fold'
+          };
+        });
+
+        // 可供筛选的分类标签 (含皇家同花顺标识)
+        const availableCategories = computed(() => {
+          const catMap = {};
+          for (let combo of beatingCombos.value) {
+            if (!catMap[combo.categoryName]) {
+              catMap[combo.categoryName] = { count: 0, isRoyal: combo.isRoyal, maxScore: combo.score };
+            }
+            catMap[combo.categoryName].count++;
+          }
+          return Object.entries(catMap)
+            .map(([name, data]) => ({ name, count: data.count, isRoyal: data.isRoyal, maxScore: data.maxScore }))
+            .sort((a, b) => b.maxScore - a.maxScore);
+        });
+
+        // 按分类筛选后的组合
+        const filteredCombos = computed(() => {
+          if (selectedCat.value === 'all') return beatingCombos.value;
+          return beatingCombos.value.filter(c => c.categoryName === selectedCat.value);
+        });
+
+        const resetAll = () => {
+          heroCards.value = [null, null];
+          boardCards.value = [null, null, null, null, null];
+          activeSlot.value = 'hero-0';
+          selectedCat.value = 'all';
+        };
+
+        // 示范1：两对示范
+        const dealSampleTwoPair = () => {
+          heroCards.value = [
+            { rank: 'A', suit: 's', val: 14 },
+            { rank: 'K', suit: 's', val: 13 }
+          ];
+          boardCards.value = [
+            { rank: 'A', suit: 'd', val: 14 },
+            { rank: 'K', suit: 'h', val: 13 },
+            { rank: '7', suit: 'c', val: 7 },
+            null,
+            null
+          ];
+          activeSlot.value = 'board-3';
+          selectedCat.value = 'all';
+        };
+
+        // 示范2：皇家同花顺示范面 (公共牌包含 Q♠ J♠ 10♠，展示皇家同花顺检测)
+        const dealSampleRoyal = () => {
+          // Hero 拿着三条 A: A♠ A♥
+          // 公共牌是: A♦ K♠ Q♠ J♠ 4♣
+          // 此时对手如果持有 10♠ 加任意牌，就能组成 10-J-Q-K-A 的皇家同花顺！
+          heroCards.value = [
+            { rank: 'A', suit: 'h', val: 14 },
+            { rank: '4', suit: 'd', val: 4 }
+          ];
+          boardCards.value = [
+            { rank: 'K', suit: 's', val: 13 },
+            { rank: 'Q', suit: 's', val: 12 },
+            { rank: 'J', suit: 's', val: 11 },
+            { rank: '7', suit: 'h', val: 7 },
+            null
+          ];
+          activeSlot.value = 'board-4';
+          selectedCat.value = 'all';
+        };
+
+        onMounted(() => {
+          resetAll();
+        });
+
+        return {
+          suits,
+          ranks,
+          heroCards,
+          boardCards,
+          activeSlot,
+          selectedCat,
+          heroCount,
+          boardCount,
+          hasFullHero,
+          heroHandEvaluation,
+          beatingCombos,
+          beatingRatio,
+          actionAdvice,
+          availableCategories,
+          filteredCombos,
+          getSuitIcon,
+          getBoardSlotLabel,
+          getCurrentSlotName,
+          isCardUsed,
+          hasActiveCard,
+          setActiveSlot,
+          clearActiveSlot,
+          clearHeroCards,
+          clearBoardCards,
+          clearSingleBoardCard,
+          clearSingleHeroCard,
+          selectCard,
+          dealSampleTwoPair,
+          dealSampleRoyal,
+          resetAll
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

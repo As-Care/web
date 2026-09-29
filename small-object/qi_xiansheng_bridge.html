@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>《剑来》· 廊桥之上，君子一言</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #090c10;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, "Songti SC", serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .scene-stage {
+      position: relative;
+      width: 1200px;
+      max-width: 95vw;
+      height: 675px;
+      max-height: 82vh;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 215, 0, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      background: #000;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 顶部题字 */
+    .header-text {
+      position: absolute;
+      top: 32px;
+      left: 36px;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.9);
+    }
+    .header-text h1 {
+      font-size: 34px;
+      letter-spacing: 6px;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(180deg, #ffffff 0%, #ffe082 80%, #ffb300 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-text p {
+      margin-top: 6px;
+      font-size: 14px;
+      letter-spacing: 3px;
+      color: #b0bec5;
+    }
+
+    /* 底部原著经典台词旁白 */
+    .dialogue-card {
+      position: absolute;
+      bottom: 28px;
+      left: 36px;
+      max-width: 580px;
+      background: rgba(13, 20, 30, 0.75);
+      backdrop-filter: blur(10px);
+      padding: 16px 22px;
+      border-radius: 8px;
+      border-left: 3.5px solid #ffb300;
+      z-index: 10;
+      pointer-events: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .dialogue-card .speaker {
+      font-size: 13px;
+      color: #4dd0e1;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .dialogue-card .line {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #f1f5f9;
+      letter-spacing: 1.5px;
+    }
+    .dialogue-card .highlight {
+      color: #ffd54f;
+      font-weight: bold;
+    }
+
+    /* 右下角控制区 */
+    .action-bar {
+      position: absolute;
+      bottom: 28px;
+      right: 36px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+    .btn {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      color: #ffd54f;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: rgba(255, 215, 0, 0.2);
+      border-color: #ffe082;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 179, 0, 0.3);
+    }
+    .btn-record {
+      background: linear-gradient(135deg, rgba(230, 81, 0, 0.9), rgba(191, 54, 12, 0.9));
+      color: #fff;
+      border-color: #ff9800;
+    }
+    .btn-record:hover {
+      background: linear-gradient(135deg, #f57c00, #d84315);
+      box-shadow: 0 4px 20px rgba(245, 124, 0, 0.5);
+    }
+
+    .recording-tag {
+      display: none;
+      position: absolute;
+      top: 32px;
+      right: 36px;
+      background: rgba(229, 57, 53, 0.9);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      align-items: center;
+      gap: 6px;
+      z-index: 15;
+      animation: blinkRed 1s infinite alternate;
+    }
+    @keyframes blinkRed {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="scene-stage">
+    <!-- 顶部标题 -->
+    <div class="header-text">
+      <h1>廊桥初遇 · 君子赠步</h1>
+      <p>大骊小镇 · 泥瓶巷草鞋少年与齐静春</p>
+    </div>
+
+    <!-- 经典对白旁白 -->
+    <div class="dialogue-card">
+      <div class="speaker">儒家圣人 · 齐静春：</div>
+      <div class="line">“陈平安，你往前走一步试试。”</div>
+      <div class="line" style="font-size: 13.5px; color: #cbd5e1; margin-top: 6px;">
+        少年向前迈出的一小步，脚下金莲与仁义金光涟漪荡漾——这是凡骨少年走向天地的<span class="highlight">第一步</span>。
+      </div>
+    </div>
+
+    <!-- 录制提示条 -->
+    <div class="recording-tag" id="rec-tag">
+      <div class="rec-dot"></div> 正在录制 5 秒视频切片...
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="action-bar">
+      <button class="btn" id="audio-btn">🌧️ 开启烟雨与浩然风声</button>
+      <button class="btn btn-record" id="rec-btn">🎬 导出实机视频 (MP4/WebM)</button>
+    </div>
+
+    <!-- Canvas 画布 -->
+    <canvas id="stageCanvas" width="1920" height="1080"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('stageCanvas');
+    const ctx = canvas.getContext('2d');
+    const WIDTH = 1920;
+    const HEIGHT = 1080;
+
+    // 背景图
+    const bgImage = new Image();
+    bgImage.src = 'qi_xiansheng_bg.jpg';
+
+    // 1. 脚下金色气运涟漪系统 (少年迈步的核心焦点)
+    // 画面中少年陈平安脚下坐标大约在 x = 1060, y = 920
+    const RIPPLE_X = 1060;
+    const RIPPLE_Y = 925;
+    const ripples = [];
+
+    function addRipple() {
+      ripples.push({
+        r: 10,
+        maxR: 260 + Math.random() * 40,
+        alpha: 0.85,
+        speed: 1.6 + Math.random() * 0.4,
+        lineWidth: 2.5
+      });
+    }
+
+    // 初始化初始涟漪
+    for (let i = 0; i < 4; i++) {
+      ripples.push({
+        r: i * 60,
+        maxR: 260,
+        alpha: 0.85 * (1 - (i * 60) / 260),
+        speed: 1.8,
+        lineWidth: 2.5
+      });
+    }
+
+    // 2. 金色浩然正气金粉/文字灵光浮空粒子
+    const goldSparks = [];
+    const confucianWords = ['仁', '义', '礼', '智', '信', '德', '善', '道', '心', '诚'];
+    
+    for (let i = 0; i < 45; i++) {
+      goldSparks.push({
+        x: RIPPLE_X + (Math.random() - 0.5) * 380,
+        y: RIPPLE_Y + (Math.random() - 0.5) * 120,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -0.8 - Math.random() * 1.5,
+        size: 1.5 + Math.random() * 3,
+        alpha: 0.3 + Math.random() * 0.7,
+        word: Math.random() < 0.25 ? confucianWords[Math.floor(Math.random() * confucianWords.length)] : null,
+        wordAlpha: 0.6 + Math.random() * 0.4,
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    // 3. 廊桥外江南烟雨雨丝系统 (小镇微雨)
+    const raindrops = [];
+    for (let i = 0; i < 180; i++) {
+      raindrops.push({
+        x: Math.random() * 750, // 主要在廊桥左侧河流区域
+        y: Math.random() * HEIGHT,
+        vx: -1.2,
+        vy: 14 + Math.random() * 8,
+        length: 22 + Math.random() * 18,
+        alpha: 0.2 + Math.random() * 0.35
+      });
+    }
+
+    // 4. 灯笼柔光与水雾
+    let time = 0;
+
+    // 音效 (Web Audio API 模拟细雨轻风与浩然清鸣)
+    let audioCtx = null;
+    let audioPlaying = false;
+    let rainGain = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // 白噪声模拟微雨风声
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+      rainGain = audioCtx.createGain();
+      rainGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+
+      whiteNoise.connect(filter);
+      filter.connect(rainGain);
+      rainGain.connect(audioCtx.destination);
+      whiteNoise.start();
+    }
+
+    // 渲染主循环
+    function render() {
+      time += 0.018;
+
+      // 电影级微缓动运镜 (缓慢向陈平安与齐先生推近)
+      const cameraScale = 1.0 + Math.sin(time * 0.12) * 0.03;
+      const cameraX = Math.sin(time * 0.1) * 15;
+      const cameraY = Math.cos(time * 0.15) * 8;
+
+      ctx.save();
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+      ctx.translate(WIDTH / 2 + cameraX, HEIGHT / 2 + cameraY);
+      ctx.scale(cameraScale, cameraScale);
+      ctx.translate(-WIDTH / 2, -HEIGHT / 2);
+
+      // 1. 绘制背景
+      if (bgImage.complete && bgImage.naturalWidth > 0) {
+        ctx.drawImage(bgImage, 0, 0, WIDTH, HEIGHT);
+      } else {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      }
+
+      // 2. 桥外微雨雨丝 (左侧水面和山峦)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(200, 225, 245, 0.4)';
+      ctx.lineWidth = 1.2;
+      raindrops.forEach(r => {
+        r.x += r.vx;
+        r.y += r.vy;
+        if (r.y > HEIGHT) {
+          r.y = -20;
+          r.x = Math.random() * 750;
+        }
+
+        ctx.globalAlpha = r.alpha;
+        ctx.beginPath();
+        ctx.moveTo(r.x, r.y);
+        ctx.lineTo(r.x + r.vx * (r.length / r.vy), r.y + r.length);
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // 3. 动态金色涟漪 (少年脚下步步生莲的金色光晕)
+      if (Math.random() < 0.025) {
+        addRipple();
+      }
+
+      ctx.save();
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rp = ripples[i];
+        rp.r += rp.speed;
+        rp.alpha = (1 - (rp.r / rp.maxR)) * 0.85;
+
+        if (rp.r >= rp.maxR) {
+          ripples.splice(i, 1);
+          continue;
+        }
+
+        // 金色椭圆涟漪 (按木地板透视 0.35 扁平化)
+        ctx.beginPath();
+        ctx.ellipse(RIPPLE_X, RIPPLE_Y, rp.r, rp.r * 0.36, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 215, 0, ${rp.alpha})`;
+        ctx.lineWidth = rp.lineWidth * (1 - rp.r / rp.maxR) + 0.8;
+        ctx.shadowColor = '#ffb300';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 4. 金色上升灵光与儒家文字光芒
+      ctx.save();
+      goldSparks.forEach(s => {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.pulse += 0.04;
+
+        if (s.y < RIPPLE_Y - 260) {
+          s.y = RIPPLE_Y + (Math.random() - 0.5) * 60;
+          s.x = RIPPLE_X + (Math.random() - 0.5) * 350;
+        }
+
+        const alpha = s.alpha * (0.6 + Math.sin(s.pulse) * 0.4);
+        ctx.fillStyle = '#ffd54f';
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = '#ffb300';
+        ctx.shadowBlur = 10;
+
+        if (s.word) {
+          ctx.font = 'bold 16px "Songti SC", serif';
+          ctx.fillText(s.word, s.x, s.y);
+        } else {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      ctx.restore();
+
+      // 5. 齐先生衣袂微风拂动感 & 灯笼暖黄色微呼吸光晕
+      ctx.save();
+      const lanternGlow = ctx.createRadialGradient(590, 100, 20, 590, 100, 160);
+      lanternGlow.addColorStop(0, `rgba(255, 200, 80, ${0.12 + Math.sin(time * 2) * 0.03})`);
+      lanternGlow.addColorStop(1, 'rgba(255, 200, 80, 0)');
+      ctx.fillStyle = lanternGlow;
+      ctx.fillRect(400, 0, 400, 300);
+      ctx.restore();
+
+      // 6. 电影质感暗角 (Cinematic Vignette)
+      const vignette = ctx.createRadialGradient(
+        WIDTH / 2, HEIGHT / 2, WIDTH * 0.38,
+        WIDTH / 2, HEIGHT / 2, WIDTH * 0.72
+      );
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(4, 8, 14, 0.65)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      ctx.restore();
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+
+    // 音效开关
+    const audioBtn = document.getElementById('audio-btn');
+    audioBtn.addEventListener('click', () => {
+      initAudio();
+      audioPlaying = !audioPlaying;
+      if (audioPlaying) {
+        rainGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 1);
+        audioBtn.textContent = '🌧️ 细雨风声回荡中';
+        audioBtn.style.color = '#4dd0e1';
+      } else {
+        rainGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        audioBtn.textContent = '🔇 开启烟雨与浩然风声';
+        audioBtn.style.color = '#ffd54f';
+      }
+    });
+
+    // 录制视频
+    const recBtn = document.getElementById('rec-btn');
+    const recTag = document.getElementById('rec-tag');
+
+    recBtn.addEventListener('click', () => {
+      if (!window.MediaRecorder) {
+        alert('当前浏览器不支持 MediaRecorder');
+        return;
+      }
+
+      recBtn.disabled = true;
+      recBtn.textContent = '⏳ 正在录制 5 秒视频...';
+      recTag.style.display = 'flex';
+
+      const stream = canvas.captureStream(60);
+      let options = { mimeType: 'video/webm;codecs=vp9' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'video/webm' };
+      }
+
+      const recorder = new MediaRecorder(stream, options);
+      const chunks = [];
+
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '剑来_廊桥齐先生试步_实机动态场景.webm';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        recTag.style.display = 'none';
+        recBtn.disabled = false;
+        recBtn.textContent = '🎬 录制完成！点击可再次导出';
+      };
+
+      recorder.start();
+      setTimeout(() => {
+        recorder.stop();
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
