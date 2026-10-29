@@ -105,6 +105,7 @@
   motion.addEventListener('change', resetArt);
   finePointer.addEventListener('change', resetArt);
 
+  const projectControls = [];
   document.querySelectorAll('.project-card').forEach(card => {
     let frame = 0;
     card.addEventListener('pointermove', event => {
@@ -140,9 +141,8 @@
       scheduleReading();
     };
     syncExpansion();
-    summary.addEventListener('click', event => {
-      event.preventDefault();
-      const open = !expanded;
+    const setExpanded = open => {
+      if (open === expanded) return;
       const startHeight = details.getBoundingClientRect().height;
       if (motion.matches || !details.animate) { finishExpansion(open); return; }
       if (expansion) { expansion.cancel(); expansion = null; }
@@ -162,7 +162,12 @@
       animation.onfinish = () => {
         if (expansion === animation) finishExpansion(open);
       };
+    };
+    summary.addEventListener('click', event => {
+      event.preventDefault();
+      setExpanded(!expanded);
     });
+    projectControls.push({ details, setExpanded, finishExpansion, isExpanded: () => expanded });
     details.addEventListener('toggle', () => {
       if (!expansion) { expanded = details.open; syncExpansion(); }
       scheduleReading();
@@ -187,6 +192,34 @@
       .forEach((card, index) => play(card, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 350, delay: Math.min(index * 35, 140) }));
     scheduleReading();
   });
+
+  // Both controls apply to every project, including categories currently hidden.
+  const bulk = document.createElement('div');
+  bulk.className = 'project-bulk-actions';
+  bulk.setAttribute('role', 'group');
+  bulk.setAttribute('aria-label', '项目详情批量操作');
+  const expandAll = document.createElement('button');
+  const collapseAll = document.createElement('button');
+  expandAll.type = collapseAll.type = 'button';
+  expandAll.textContent = '全部展开';
+  collapseAll.textContent = '全部收起';
+  bulk.append(expandAll, collapseAll);
+  document.querySelector('.glass-radio-group').after(bulk);
+  const syncBulk = () => {
+    expandAll.disabled = projectControls.every(control => control.isExpanded());
+    collapseAll.disabled = projectControls.every(control => !control.isExpanded());
+  };
+  const setAll = open => {
+    projectControls.forEach(control => {
+      if (control.details.closest('.swiper-slide[hidden]')) control.finishExpansion(open);
+      else control.setExpanded(open);
+    });
+    syncBulk();
+  };
+  expandAll.addEventListener('click', () => setAll(true));
+  collapseAll.addEventListener('click', () => setAll(false));
+  projectControls.forEach(({ details }) => details.addEventListener('toggle', syncBulk));
+  syncBulk();
 
   // A native dialog supplies keyboard focus trapping and Escape-to-close.
   const viewer = document.createElement('dialog');

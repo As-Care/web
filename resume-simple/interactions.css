@@ -225,3 +225,79 @@ body:has(.image-viewer[open]) { overflow: hidden; }
   .art-grid::after { opacity: .3; }
   .brand-mark { transition: none; }
 }
+
+.project-bulk-actions {
+  order:1;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin:-8px 0 22px;
+}
+.project-bulk-actions button {
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--green);
+  padding:6px 12px;
+  font-size:12px;
+}
+.project-bulk-actions button:hover:not(:disabled) { background:var(--tint); }
+.project-bulk-actions button:disabled { opacity:.4; cursor:default; }
+@media print { .project-bulk-actions { display:none !important; } }
+
+/* Touch targets grow independently of the visible icon artwork. */
+@media screen and (max-width:650px), screen and (pointer:coarse) {
+  .menu-toggle,
+  .back-top,
+  .viewer-close {
+    position:relative;
+    touch-action:manipulation;
+  }
+  .back-top { position:fixed; }
+  .viewer-close { position:absolute; }
+  .menu-toggle::before,
+  .back-top::before,
+  .viewer-close::before {
+    content:"";
+    position:absolute;
+    inset:-7px;
+    border-radius:inherit;
+  }
+  .project-details summary {
+    min-height:48px;
+    padding:12px 0;
+    touch-action:manipulation;
+  }
+  .project-btn,
+  .button-primary,
+  .button-secondary,
+  .glass-radio-group label,
+  .project-bulk-actions button,
+  .copy-contact {
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    touch-action:manipulation;
+  }
+  .project-bulk-actions { gap:12px; }
+  .glass-radio-group { gap:8px; }
+  .copy-contact { width:100%; }
+  .site-header nav a,
+  .site-header nav a:last-child {
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+  }
+  .hero-bottom a { min-height:44px; display:inline-flex; align-items:center; }
+  .menu-toggle:active,
+  .viewer-close:active,
+  .project-details summary:active,
+  .project-btn:active,
+  .project-bulk-actions button:active:not(:disabled),
+  .copy-contact:active {
+    background:var(--tint);
+  }
+  .back-top:active,
+  .button-primary:active { background:#193e30; }
+}
